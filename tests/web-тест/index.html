@@ -30,6 +30,9 @@
   th { color:var(--muted); font-weight:600; }
   .muted { color:var(--muted); font-size:12px; }
   .err { color:#b0202a; font-size:13px; margin-top:8px; }
+  input[type=text] { border:1px solid var(--line); border-radius:8px; padding:9px 10px; font-size:13px; font-family:inherit; }
+  label.chk { font-size:13px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; user-select:none; }
+  .ok { color:#1c6b2a; font-weight:600; } .bad { color:#b0202a; font-weight:600; }
 </style>
 </head>
 <body>
@@ -40,14 +43,23 @@
   <div class="card">
     <h2>1. Проверка текста</h2>
     <textarea id="inp">Здравствуйте! Меня зовут Воронова Марина Алексеевна. Мой ИНН 7707083893, СНИЛС 112-233-445 95, телефон +7 (921) 555-18-43. Паспорт: серия 40 12, номер 583 214. Почта marina.voronova@example.com. Дата рождения 03.11.1987. Карта 4276 1842 9031 5570. Адрес: Санкт-Петербург, Невский проспект, дом 18, квартира 47.</textarea>
+    <div class="muted" style="margin-top:12px">Кастомный параметр <code>disable_entities</code> — не маскировать эти типы
+      (может только <b>сужать</b> политику; недопустимые названия игнорируются, данные остаются скрытыми):</div>
+    <div class="row" id="cpBoxes"><span class="muted">загрузка политики…</span></div>
+    <div class="row">
+      <input type="text" id="cpFree" style="flex:1;min-width:280px"
+             placeholder="ещё типы через запятую — проверить, что недопустимые игнорируются">
+    </div>
     <div class="row">
       <button id="go">Обезличить</button>
       <button id="back" class="sec" disabled>Восстановить исходный</button>
+      <button id="cpClear" class="sec">Сбросить параметр</button>
     </div>
     <div id="err" class="err"></div>
     <div id="resCard" style="display:none;margin-top:14px">
       <div class="muted" id="stat"></div>
       <div class="out" id="out" style="margin:8px 0 14px"></div>
+      <div id="cpDiag" class="muted" style="line-height:1.8;margin-bottom:12px"></div>
       <table id="ents"><thead><tr><th>Тип</th><th>Значение</th><th>Score</th></tr></thead><tbody></tbody></table>
     </div>
   </div>
@@ -75,7 +87,9 @@ function highlight(text){ return text.replace(/<([A-Z_]+?)(_\d+)?>/g,(m,t)=>`<sp
 $('go').onclick = async () => {
   $('err').textContent=''; $('go').disabled=true;
   try{
-    const r=await fetch('/anonymize',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:$('inp').value})});
+    const dis=cpSelected();
+    const r=await fetch('/anonymize',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:$('inp').value, disable_entities:dis})});
     if(!r.ok) throw new Error('HTTP '+r.status);
     const d=await r.json(); lastMapping=d.mapping; lastAnon=d.anonymized;
     $('out').innerHTML=highlight(d.anonymized);
@@ -83,6 +97,14 @@ $('go').onclick = async () => {
     d.entities_found.forEach(e=>{const tr=document.createElement('tr');
       tr.innerHTML=`<td><span class="ph t-${typeClass(e.entity_type)}">${e.entity_type}</span></td><td>${(e.value||'').replace(/</g,'&lt;')}</td><td>${e.score}</td>`; tb.appendChild(tr);});
     $('stat').textContent=`Найдено ПДн: ${d.entities_found.length}`;
+    // Диагностика параметра: недопустимые типы отбрасываются молча, и без этой
+    // строки правило нельзя проверить глазами.
+    const applied=d.disable_applied||[], ignored=d.disable_ignored||[];
+    $('cpDiag').innerHTML = !dis.length ? '' :
+      `Запрошено отключить: <b>${esc(dis.join(', '))}</b><br>`
+      + (applied.length ? `Применено: <span class="ok">${esc(applied.join(', '))}</span><br>`
+                        : 'Применено: <span class="muted">ничего</span><br>')
+      + (ignored.length ? `Отброшено политикой (данные остались скрыты): <span class="bad">${esc(ignored.join(', '))}</span>` : '');
     $('resCard').style.display=''; $('back').disabled=false;
   }catch(e){ $('err').textContent='Ошибка: '+e.message; }
   finally{ $('go').disabled=false; }
@@ -111,6 +133,32 @@ $('goDoc').onclick = async () => {
     $('docRes').style.display='';
   }catch(e){ $('errDoc').textContent='Ошибка: '+e.message; }
   finally{ $('goDoc').disabled=false; }
+};
+
+// ── кастомный параметр disable_entities (к кнопке «Обезличить») ────────────
+// Чекбоксы строим из /policy, а не хардкодим: список типов задаётся движком,
+// и захардкоженный перечень разошёлся бы с реальной политикой.
+const esc = s => String(s).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const box = e => `<label class="chk"><input type="checkbox" value="${esc(e)}"> ${esc(e)}</label>`;
+fetch('/policy').then(r=>r.json()).then(d=>{
+  const core=d.core||d.entities, rest=(d.entities||[]).filter(e=>!core.includes(e));
+  // Основные типы — те, что распознаватели реально выдают. Остальное политика
+  // принимает, но на практике не срабатывает — прячем, чтобы не путало при проверке.
+  let html = core.map(box).join('');
+  if(rest.length) html += `<details style="width:100%;margin-top:8px"><summary class="muted" style="cursor:pointer">`
+    + `прочие типы политики (${rest.length}) — принимаются, но нашими распознавателями не выдаются</summary>`
+    + `<div class="row">${rest.map(box).join('')}</div></details>`;
+  $('cpBoxes').innerHTML = html;
+}).catch(()=>{ $('cpBoxes').innerHTML='<span class="err">Не удалось получить список типов политики.</span>'; });
+
+function cpSelected(){
+  const boxes=[...$('cpBoxes').querySelectorAll('input:checked')].map(i=>i.value);
+  const free=$('cpFree').value.split(',').map(s=>s.trim()).filter(Boolean);
+  return boxes.concat(free);
+}
+$('cpClear').onclick = () => {
+  $('cpBoxes').querySelectorAll('input').forEach(i=>{i.checked=false;});
+  $('cpFree').value=''; $('cpDiag').innerHTML='';
 };
 </script>
 </body>
