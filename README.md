@@ -10,12 +10,38 @@
 
 ---
 
-## 1. Клонирование репозитория
+## 1. Клонирование репозитория и модель
 
 ```bash
-git clone https://github.com/your-org/your-repo.git
-cd your-repo
+git clone https://gitea.guiaidn.ru/egzoddd/ASKII-Anonimization_users_data_with_text-MODULE.git anonymization-module
+cd anonymization-module
 ```
+
+Публичное зеркало: `https://github.com/EgzodD/anonymization-service.git` — может отставать от gitea.
+
+### Модель распознавания ФИО (обязательно)
+
+Модель PERSON (дообученный ruBERT, ~114 МБ) **не хранится в git** — это внутренний
+актив проекта. Без неё сервис не стартует, а Docker-образ не соберётся.
+
+Получите архив модели у владельца проекта и распакуйте так, чтобы файлы лежали
+прямо в `models/person_ruBERT/`:
+
+```
+models/person_ruBERT/
+├── config.json
+├── model.safetensors
+├── tokenizer.json
+└── tokenizer_config.json
+```
+
+Если архив доступен по ссылке (`.tar.gz` с этими файлами в корне):
+
+```bash
+PERSON_MODEL_URL=<ссылка> ./scripts/fetch_person_model.sh
+```
+
+Проверка: `ls models/person_ruBERT/config.json` — файл должен существовать.
 
 ---
 
@@ -86,11 +112,27 @@ DOCUMENT_PDF_DPI=150            # DPI растеризации PDF
 
 ### Вариант A: Автономный режим (по умолчанию)
 
-БД не нужна. `.env` — как в Режиме A (шаг 2). Поднимается один контейнер:
+БД не нужна. `.env` — как в Режиме A (шаг 2), модель — в `models/person_ruBERT/`
+(шаг 1). Поднимается один контейнер:
 
 ```bash
-docker compose up --build -d
+docker compose build               # первая сборка качает ~1 ГБ: torch (CPU), transformers, spaCy ru_core_news_lg
+docker compose up -d
+docker compose logs -f anonymizer  # дождаться «Application startup complete» (10–25 с), затем Ctrl+C
 ```
+
+Затем — проверка из раздела 4.
+
+- Ошибка `permission denied ... docker.sock` — пользователь не в группе `docker`,
+  выполняйте команды через `sudo`.
+- Остановить: `docker compose down`. Пересобрать после изменения кода:
+  `docker compose up -d --build`.
+
+> ⚠️ `docker-compose.yml` публикует порт на всех интерфейсах (`0.0.0.0:8000`).
+> С пустым `API_KEY` любой в локальной сети сможет вызывать API без
+> аутентификации, а при включённой интеграции с Chatwoot — получать разговоры
+> из базы. Задайте `API_KEY` в `.env`; если сервис нужен только на этой машине,
+> замените в compose порт на `"127.0.0.1:8000:8000"`.
 
 Сервис `db` в `docker-compose.yml` по умолчанию закомментирован — он нужен
 только для интеграции с Chatwoot (Вариант C).
@@ -181,11 +223,18 @@ curl http://localhost:8000/health
   "status": "ok",
   "analyzer_ready": true,
   "person_model_loaded": true,
-  "chatwoot_enabled": false,
   "db_connected": null,
-  "supported_entities": ["CREDIT_CARD", "DATE_OF_BIRTH", "EMAIL_ADDRESS", "INN", "PASSPORT", "PERSON", "PHONE_NUMBER", "SNILS"]
+  "chatwoot_enabled": false,
+  "supported_entities": ["ADDRESS", "AGE", "CREDIT_CARD", "CRYPTO", "DATE_OF_BIRTH", "DATE_TIME",
+                         "EMAIL", "EMAIL_ADDRESS", "IBAN_CODE", "ID", "INN", "IN_VOTER", "IP_ADDRESS",
+                         "MEDICAL_LICENSE", "ORGANIZATION", "PASSPORT", "PERSON", "PHONE_NUMBER",
+                         "SNILS", "URL"]
 }
 ```
+
+`supported_entities` — все типы, которые знает движок, включая встроенные в Presidio.
+Собственный плейсхолдер есть только у типов из раздела 8; остальные (например
+IP-адрес, URL, IBAN, дата и время) тоже маскируются, но общим `<PII>`.
 
 `db_connected` равен `null` в автономном режиме (БД не используется). При
 `CHATWOOT_ENABLED=true` поле показывает `true`/`false` по состоянию базы, а
@@ -201,6 +250,38 @@ Swagger UI (интерактивная документация API):
 ```
 http://localhost:8000/docs
 ```
+
+### Проверка, что работает актуальная версия
+
+Два вызова. Если `API_KEY` задан, добавьте к ним `-H "X-API-Key: <ключ>"`.
+
+```bash
+# 1. Модель ФИО загружена
+curl -s http://localhost:8000/health
+# ждём: "status": "ok" и "person_model_loaded": true
+
+# 2. Обезличивание работает, исходные значения по умолчанию не отдаются
+curl -s -X POST http://localhost:8000/anonymize/text \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"Иван Петров, ИНН 7707083893"}'
+# ждём: "anonymized": "<PERSON>, ИНН <INN>", "mapping": {} и пустые "value"
+```
+
+Если в ответе `mapping` заполнен без `"return_mapping": true`, а в `/health` нет поля
+`person_model_loaded` — отвечает устаревшая сборка сервиса.
+
+### Визуальная проверка — веб-стенд
+
+Для демонстрации удобнее страница с подсветкой плейсхолдеров, восстановлением
+текста, кастомным параметром и загрузкой `.docx`/`.pdf`. Запускается локально
+(нужен venv из раздела 9), к Docker-контейнеру не обращается:
+
+```bash
+.venv/bin/python tests/web-тест/server.py   # затем http://localhost:8080
+```
+
+Готовые тестовые документы — в `tests/web-тест/тестовые_файлы/`. Подробнее —
+`tests/web-тест/README.md`.
 
 ---
 
@@ -295,25 +376,55 @@ http://localhost:8000/docs
 
 ## 6. Использование API напрямую
 
+Все эндпоинты ниже защищены ключом: если в `.env` задан `API_KEY`, передавайте
+заголовок `X-API-Key`. Без ключа сервис ответит `401`. При пустом `API_KEY`
+аутентификация выключена и заголовок можно не указывать (только для разработки).
+
 ### 6.1 Анонимизация произвольного текста
 
-Не требует БД. Принимает текст, возвращает обезличенный.
+Не требует БД. Принимает текст (до 50 000 символов), возвращает обезличенный.
 
 ```bash
 curl -X POST http://localhost:8000/anonymize/text \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: <ключ>" \
   -d '{"text": "Меня зовут Иван Петров, тел +7 999 123 45 67, email ivan@mail.ru"}'
 ```
 
-Ответ:
+Ответ по умолчанию — **без исходных значений**: `value` пустые, `mapping` пустой.
+Это сделано намеренно: `mapping` позволяет восстановить ПДн, поэтому отдаётся
+только по явному запросу.
+
 ```json
 {
   "original": "Меня зовут Иван Петров, тел +7 999 123 45 67, email ivan@mail.ru",
   "anonymized": "Меня зовут <PERSON>, тел <PHONE>, email <EMAIL>",
   "entities_found": [
-    {"entity_type": "PERSON", "start": 12, "end": 24, "score": 0.85, "value": "Иван Петров"},
-    {"entity_type": "PHONE_NUMBER", "start": 30, "end": 48, "score": 0.9, "value": "+7 999 123 45 67"},
-    {"entity_type": "EMAIL_ADDRESS", "start": 56, "end": 69, "score": 0.9, "value": "ivan@mail.ru"}
+    {"entity_type": "PERSON",        "start": 11, "end": 22, "score": 0.99, "value": ""},
+    {"entity_type": "PHONE_NUMBER",  "start": 28, "end": 44, "score": 0.9,  "value": ""},
+    {"entity_type": "EMAIL_ADDRESS", "start": 52, "end": 64, "score": 1.0,  "value": ""}
+  ],
+  "mapping": {}
+}
+```
+
+Необязательные параметры запроса:
+
+| Параметр | Что делает |
+|----------|-----------|
+| `"return_mapping": true` | вернуть `mapping` и значения в `entities_found` — нужно для восстановления текста (6.2). Выдача пишется в лог для аудита (только количество, без значений) |
+| `"disable_entities": ["INN", ...]` | не маскировать перечисленные типы. Может только **сужать** политику: неизвестные и запрещённые типы игнорируются, данные остаются скрытыми |
+
+Ответ с `"return_mapping": true`:
+
+```json
+{
+  "original": "Меня зовут Иван Петров, тел +7 999 123 45 67, email ivan@mail.ru",
+  "anonymized": "Меня зовут <PERSON>, тел <PHONE>, email <EMAIL>",
+  "entities_found": [
+    {"entity_type": "PERSON",        "start": 11, "end": 22, "score": 0.99, "value": "Иван Петров"},
+    {"entity_type": "PHONE_NUMBER",  "start": 28, "end": 44, "score": 0.9,  "value": "+7 999 123 45 67"},
+    {"entity_type": "EMAIL_ADDRESS", "start": 52, "end": 64, "score": 1.0,  "value": "ivan@mail.ru"}
   ],
   "mapping": {
     "<PERSON>": "Иван Петров",
@@ -323,13 +434,41 @@ curl -X POST http://localhost:8000/anonymize/text \
 }
 ```
 
-### 6.2 Анонимизация разговора из БД
+Несколько значений одного типа получают номера: `<PHONE>`, `<PHONE_2>`, `<PHONE_3>` —
+каждое восстанавливается отдельно.
+
+### 6.2 Восстановление исходного текста
+
+Основной сценарий с внешней LLM: обезличить текст → отправить модели → в её ответе
+вернуть исходные значения по `mapping` из шага 6.1.
+
+```bash
+curl -X POST http://localhost:8000/deanonymize \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: <ключ>" \
+  -d '{"text": "Перезвоните <PERSON> по номеру <PHONE>.",
+       "mapping": {"<PERSON>": "Иван Петров", "<PHONE>": "+7 999 123 45 67"}}'
+```
+
+Ответ:
+```json
+{
+  "deanonymized": "Перезвоните Иван Петров по номеру +7 999 123 45 67.",
+  "replaced": 2
+}
+```
+
+`replaced` — сколько плейсхолдеров заменено. `mapping` храните на своей стороне
+как ПДн: сервис его не сохраняет и не пишет в лог.
+
+### 6.3 Анонимизация разговора из БД
 
 Подтягивает из БД conversation + все messages + contact и обезличивает.
 
 ```bash
 curl -X POST http://localhost:8000/anonymize/conversation \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: <ключ>" \
   -d '{"conversation_id": 1}'
 ```
 
@@ -338,23 +477,25 @@ curl -X POST http://localhost:8000/anonymize/conversation \
 - анонимизированный contact (name, email, phone, attributes)
 - список всех messages с анонимизированным content
 
-### 6.3 Пакетная анонимизация
+### 6.4 Пакетная анонимизация
 
 Несколько разговоров за один запрос:
 
 ```bash
 curl -X POST http://localhost:8000/anonymize/batch \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: <ключ>" \
   -d '{"conversation_ids": [1, 2, 3]}'
 ```
 
-### 6.4 Обезличивание документа (PDF / Word)
+### 6.5 Обезличивание документа (PDF / Word)
 
 Требует `DOCUMENT_ENABLED=true`. Принимает файл `.docx` или `.pdf`, возвращает
 обезличенную версию тем же типом (multipart-загрузка).
 
 ```bash
 curl -X POST http://localhost:8000/anonymize/document \
+  -H "X-API-Key: <ключ>" \
   -F "file=@/path/to/document.docx" \
   -o anonymized_document.docx
 ```
@@ -365,6 +506,9 @@ curl -X POST http://localhost:8000/anonymize/document \
   — на выходе **нет текстового слоя**, скопировать ПДн из результата нельзя.
 - Сводка о найденном (без значений ПДн) — в заголовке ответа `X-Anonymization-Summary`.
 - `mapping` для документов не возвращается (это ключ де-анонимизации целого файла).
+- **Ограничение:** ПДн ищутся только в тексте. Данные на встроенных картинках
+  (сканы, фото документов) не распознаются и остаются в результате как есть — для
+  них нужен OCR. Пример — `tests/web-тест/тестовые_файлы/с_картинками.*`.
 - Необязательный form-параметр `disable_entities` (список типов через запятую) —
   как в `/anonymize/text`, только сужение.
 
@@ -376,16 +520,17 @@ curl -X POST http://localhost:8000/anonymize/document \
 import httpx
 
 ANONYMIZER_URL = "http://anonymizer:8000"  # имя контейнера в Docker-сети
+HEADERS = {"X-API-Key": "<ключ>"}           # значение API_KEY из .env сервиса
 
 # Текст на лету
-response = httpx.post(f"{ANONYMIZER_URL}/anonymize/text", json={
+response = httpx.post(f"{ANONYMIZER_URL}/anonymize/text", headers=HEADERS, json={
     "text": "Клиент Иван Петров, тел +79991234567"
 })
 clean = response.json()["anonymized"]
 # "Клиент <PERSON>, тел <PHONE>"
 
 # Целый разговор из БД
-response = httpx.post(f"{ANONYMIZER_URL}/anonymize/conversation", json={
+response = httpx.post(f"{ANONYMIZER_URL}/anonymize/conversation", headers=HEADERS, json={
     "conversation_id": 42
 })
 data = response.json()
@@ -407,6 +552,10 @@ for msg in data["messages"]:
 | Паспорт | `<PASSPORT>` | 45 15 678901 -> `<PASSPORT>` |
 | Дата рождения | `<DATE_OF_BIRTH>` | 15.03.1990 -> `<DATE_OF_BIRTH>` |
 | Банковская карта | `<CREDIT_CARD>` | 4276 1234 5678 9012 -> `<CREDIT_CARD>` |
+| Адрес | `<ADDRESS>` | г. Москва, ул. Ленина, д. 5, кв. 12 -> `<ADDRESS>` |
+| Прочее: IP, URL, IBAN, криптокошелёк, дата и время | `<PII>` | 192.168.1.10 -> `<PII>` |
+
+Несколько значений одного типа нумеруются: `<PHONE>`, `<PHONE_2>`, …
 
 ### Форматы на входе
 
@@ -418,7 +567,9 @@ for msg in data["messages"]:
 
 ### Что НЕ анонимизируется
 
-**LOCATION** (города, адреса, улицы) — по требованию проекта остаются в тексте как есть.
+**LOCATION** — отдельные упоминания городов и стран («живу в Москве») остаются в
+тексте как есть: сами по себе они не идентифицируют человека. Адрес с улицей и
+домом — это уже ПДн, он маскируется как `<ADDRESS>`.
 
 ### Какие поля обрабатываются из БД
 
@@ -430,31 +581,69 @@ for msg in data["messages"]:
 
 ---
 
-## 9. Запуск тестов
+## 9. Локальный запуск и тесты (без Docker)
+
+### Установка
+
+Нужен Python 3.12. Команды выполняются из корня репозитория, модель — в
+`models/person_ruBERT/` (шаг 1).
 
 ```bash
-# Локально (без Docker)
-cd source/realization
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python -m spacy download ru_core_news_lg
-python -m pytest tests/ -v
+python3.12 -m venv .venv
+.venv/bin/pip install -r requirements-dev.txt
+# модель ФИО: CPU-сборка torch, версии — как в Dockerfile
+.venv/bin/pip install "transformers==5.12.1" "torch==2.12.1" \
+    --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+.venv/bin/python -m spacy download ru_core_news_lg
+.venv/bin/pip install ruff pytest-cov     # для линтера и покрытия (scripts/check.sh)
 ```
+
+Запускайте именно `.venv/bin/python` / `.venv/bin/...`: в системном Python этих
+зависимостей нет, и сервис упадёт на импорте.
+
+### Запуск сервиса
+
+```bash
+PERSON_MODEL_DIR="$PWD/models/person_ruBERT" .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+Путь к модели задан явно, потому что в `.env` для Docker указан путь внутри
+контейнера (`/app/...`), которого на хосте нет. Для документов добавьте
+`DOCUMENT_ENABLED=true` перед командой. Проверка — раздел 4.
+
+### Тесты
+
+```bash
+# как в CI — без модели ФИО (тесты с маркером requires_model пропускаются)
+ALLOW_NO_PERSON_MODEL=true .venv/bin/pytest -m "not requires_model" -q
+
+# полный набор, включая гейт утечек LeakRate — нужна модель
+PERSON_MODEL_DIR="$PWD/models/person_ruBERT" .venv/bin/pytest -q
+
+# линтер + тесты + покрытие одной командой (то же, что CI)
+./scripts/check.sh
+
+# интерактивное меню по категориям: security, privacy, speed, ...
+./scripts/test_menu.py
+```
+
+Что покрыто, текущие цифры прогона и почему часть тестов помечена `xfail` —
+в `tests/README.md` и `tests/МЕТОДИКА_ТЕСТИРОВАНИЯ.md`.
 
 ---
 
 ## 10. Структура проекта
 
 ```
-realization/
-├── app/
-│   ├── main.py               # FastAPI-приложение, ядро: /health, /anonymize/text
-│   ├── auth.py                # Проверка API-ключа (общая)
-│   ├── config.py              # Настройки из .env (CHATWOOT_ENABLED, DATABASE_URL, ...)
-│   ├── models.py              # Pydantic-схемы ядра
-│   ├── anonymizer.py          # Логика анонимизации (Presidio + кастомные распознаватели)
-│   ├── custom_recognizers.py  # Regex-распознаватели для русских ПДн
+anonymization-module/
+├── app/                           # код сервиса — единственное, что попадает в Docker-образ (+ модель)
+│   ├── main.py                    # FastAPI: /health, /anonymize/text, /deanonymize
+│   ├── auth.py                    # Проверка API-ключа (заголовок X-API-Key)
+│   ├── config.py                  # Настройки из .env (PERSON_MODEL_DIR, API_KEY, флаги режимов)
+│   ├── models.py                  # Pydantic-схемы ядра
+│   ├── anonymizer.py              # Логика обезличивания: Presidio, разрешение пересечений, mapping
+│   ├── custom_recognizers.py      # Regex-распознаватели русских ПДн (ИНН, СНИЛС, паспорт, адрес, ...)
+│   ├── person_transformer_recognizer.py  # Распознавание ФИО дообученной моделью ruBERT
 │   └── integrations/
 │       ├── chatwoot/          # Опциональный адаптер Chatwoot (за CHATWOOT_ENABLED)
 │       │   ├── database.py    #   SQLAlchemy-модели + ленивое подключение к БД
@@ -466,16 +655,32 @@ realization/
 │           ├── pdf_handler.py  #   Обезличивание PDF растеризацией (без AGPL)
 │           ├── metadata.py     #   Очистка метаданных документа
 │           └── router.py       #   Эндпоинт /anonymize/document
-├── data/
-│   └── ru_training_data.csv   # Датасет для тестирования качества распознавания
+├── models/                        # НЕ в git — модель кладётся вручную (шаг 1)
+│   └── person_ruBERT/
 ├── tests/
-│   ├── conftest.py            # Фикстуры pytest
-│   ├── test_anonymizer.py     # Тесты модуля анонимизации (28 тестов)
-│   └── test_api.py            # Тесты API + webhook (15 тестов)
-├── Dockerfile                 # Образ сервиса
-├── docker-compose.yml         # Оркестрация контейнеров
-├── init.sql                   # Тестовые данные для локальной БД
-├── requirements.txt           # Python-зависимости
-├── .env.example               # Шаблон переменных окружения
+│   ├── README.md                  # Как устроены тесты, цифры прогона, xfail
+│   ├── МЕТОДИКА_ТЕСТИРОВАНИЯ.md   # Методики тестирования на примерах из набора
+│   ├── conftest.py                # Фикстуры; пропуск requires_model без модели
+│   ├── test_*.py                  # Ядро: распознавание, API, обратимость, грязные форматы, LeakRate, скорость
+│   ├── integrations/
+│   │   ├── chatwoot/              # Тесты адаптера Chatwoot
+│   │   └── documents/             # Тесты адаптера PDF / Word
+│   └── web-тест/                  # Веб-стенд для ручной проверки + генератор тестовых документов
+├── scripts/
+│   ├── check.sh                   # Линтер + тесты + покрытие (локальная замена CI)
+│   ├── test_menu.py               # Меню запуска тестов по категориям
+│   ├── demo_examples.py           # Показ «вход → выход» на примерах
+│   └── fetch_person_model.sh      # Загрузка модели по ссылке (PERSON_MODEL_URL)
+├── data/
+│   ├── ru_training_data.csv       # Датасет для проверки качества распознавания
+│   └── training/                  # Обучение и оценка модели PERSON: наборы train/dev/test, ноутбуки, скрипты метрик
+├── .github/workflows/             # CI: ci.yml (на каждый push), nightly.yml (по расписанию)
+├── Dockerfile                     # Образ сервиса
+├── docker-compose.yml             # Запуск контейнера (и БД для режима Chatwoot)
+├── init.sql                       # Тестовые данные для локальной БД
+├── requirements.txt               # Зависимости сервиса
+├── requirements-dev.txt           # + зависимости для тестов
+├── pyproject.toml                 # Настройки pytest (маркеры) и ruff
+├── .env.example                   # Шаблон переменных окружения
 └── .dockerignore
 ```
