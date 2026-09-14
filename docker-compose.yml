@@ -22,7 +22,7 @@ services:
     env_file: .env
     environment:
       # Путь к модели ВНУТРИ контейнера (переопределяет хостовый путь из .env).
-      # models/person_ruBERT попадает в образ через COPY . . (см. Dockerfile).
+      # models/person_ruBERT копируется в образ отдельным COPY (см. Dockerfile).
       - PERSON_MODEL_DIR=/app/models/person_ruBERT
     # depends_on нужен только при CHATWOOT_ENABLED=true (раскомментируйте вместе с `db`).
     # depends_on:
