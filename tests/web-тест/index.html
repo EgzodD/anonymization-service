@@ -142,11 +142,11 @@ const esc = s => String(s).replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const box = e => `<label class="chk"><input type="checkbox" value="${esc(e)}"> ${esc(e)}</label>`;
 fetch('/policy').then(r=>r.json()).then(d=>{
   const core=d.core||d.entities, rest=(d.entities||[]).filter(e=>!core.includes(e));
-  // Основные типы — те, что распознаватели реально выдают. Остальное политика
-  // принимает, но на практике не срабатывает — прячем, чтобы не путало при проверке.
+  // Основные типы — с собственным плейсхолдером. Прочие — встроенные в presidio:
+  // часть срабатывает и маскируется общим <PII>, часть рассчитана на иностранные форматы.
   let html = core.map(box).join('');
   if(rest.length) html += `<details style="width:100%;margin-top:8px"><summary class="muted" style="cursor:pointer">`
-    + `прочие типы политики (${rest.length}) — принимаются, но нашими распознавателями не выдаются</summary>`
+    + `прочие типы политики (${rest.length}) — без своего плейсхолдера, маскируются как &lt;PII&gt;</summary>`
     + `<div class="row">${rest.map(box).join('')}</div></details>`;
   $('cpBoxes').innerHTML = html;
 }).catch(()=>{ $('cpBoxes').innerHTML='<span class="err">Не удалось получить список типов политики.</span>'; });
