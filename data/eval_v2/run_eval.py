@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 import platform
+import re
 import subprocess
 import sys
 import time
@@ -34,6 +35,8 @@ BASE_MODEL = os.path.join(ROOT, "models", "person_ruBERT_baseline")
 DATASETS = {
     "v2": os.path.join(HERE, "test_v2.jsonl"),
     "old": os.path.join(ROOT, "data", "training", "test", "test.jsonl"),
+    # сторонний набор с независимой разметкой, см. load_bench.py
+    "bench": os.path.join(HERE, "bench.jsonl"),
 }
 SYSTEMS = {
     "S1": "spaCy ru_core_news_lg (NER-бэкенд Presidio)",
@@ -45,7 +48,29 @@ SYSTEMS = {
     # показывают вклад декодирования, см. поправку 1 в PROTOCOL.md
     "S3simple": "то же, что S3, но склейка подслов simple",
     "S4simple": "то же, что S4, но склейка подслов simple",
+    # сторонняя доменная модель для русских ПДн (redmadrobot, MIT)
+    "S6": "rubert-base-pii-ner — сторонняя модель, обучена на русских ПДн",
 }
+BENCH_MODEL = "redmadrobot-rnd/rubert-base-pii-ner"
+PERSON_PART_LABELS = ("FIRST_NAME", "LAST_NAME", "MIDDLE_NAME", "PER", "PERSON")
+_GLUE = re.compile(r"^[\s.]*$")
+
+
+def merge_adjacent(text, spans):
+    """Склеивает соседние спаны имени, разделённые пробелами или точкой.
+
+    Нужна только для S6: эта модель размечает имя по частям (имя, фамилия,
+    отчество — отдельные сущности), а эталон и остальные системы оперируют
+    именем целиком. Без склейки строгое совпадение границ у неё не считалось бы.
+    """
+    spans = sorted(spans)
+    out = []
+    for s, e in spans:
+        if out and _GLUE.match(text[out[-1][1]:s]):
+            out[-1] = (out[-1][0], e)
+        else:
+            out.append((s, e))
+    return out
 
 
 def load_dataset(name):
@@ -99,6 +124,19 @@ def make_system(code):
                 if group.rsplit("-", 1)[-1].upper() in ("PER", "PERSON"):
                     out.append((int(ent["start"]), int(ent["end"])))
             return out
+    elif code == "S6":
+        from transformers import AutoModelForTokenClassification, AutoTokenizer, pipeline
+        pipe = pipeline("token-classification",
+                        model=AutoModelForTokenClassification.from_pretrained(BENCH_MODEL),
+                        tokenizer=AutoTokenizer.from_pretrained(BENCH_MODEL),
+                        aggregation_strategy="first")
+        def run(text):
+            out = []
+            for ent in pipe(text):
+                group = (ent.get("entity_group") or ent.get("entity") or "")
+                if group.rsplit("-", 1)[-1].upper() in PERSON_PART_LABELS:
+                    out.append((int(ent["start"]), int(ent["end"])))
+            return merge_adjacent(text, out)
     elif code == "S5":
         os.environ["PERSON_MODEL_DIR"] = PROD_MODEL
         from app.anonymizer import anonymize_text

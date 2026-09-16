@@ -1,0 +1,29 @@
+{
+  "source": "redmadrobot-rnd/pii_benchmark (MIT)",
+  "examples_in_source": 2841,
+  "examples_written": 2841,
+  "dropped_alignment_failed": 0,
+  "person_parts_merged": 579,
+  "entities_by_type": {
+    "PERSON": 685,
+    "PASSPORT": 494,
+    "OTHER_DRIVER_LICENSE": 371,
+    "OTHER_BIRTH_CERTIFICATE": 341,
+    "OTHER_CITY": 339,
+    "OTHER_MILITARY_ID": 278,
+    "INN": 263,
+    "OTHER_COUNTRY": 242,
+    "SNILS": 223,
+    "EMAIL_ADDRESS": 221,
+    "OTHER_URL": 206,
+    "CREDIT_CARD": 203,
+    "OTHER_REGION": 176,
+    "PHONE_NUMBER": 173,
+    "OTHER_STREET": 171,
+    "OTHER_OMS": 170,
+    "OTHER_HOUSE": 163,
+    "OTHER_DISTRICT": 161,
+    "OTHER_IP_ADDRESS": 155
+  },
+  "note": "Типы с префиксом OTHER_ наш сервис не поддерживает, в метрики не входят."
+}
