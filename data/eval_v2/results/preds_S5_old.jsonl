@@ -1,0 +1,150 @@
+{"id": "old-0001", "spans": [[41, 55]], "ms": 11.42, "anonymized": "Прошу проверить ИНН <INN> клиента <PERSON>."}
+{"id": "old-0002", "spans": [[2, 15]], "ms": 13.85, "anonymized": "Я <PERSON>, мой СНИЛС <SNILS>, родилась <DATE_OF_BIRTH>."}
+{"id": "old-0003", "spans": [[15, 29]], "ms": 11.68, "anonymized": "Договор на имя <PERSON>, дата рождения <DATE_OF_BIRTH>."}
+{"id": "old-0004", "spans": [[7, 20]], "ms": 11.08, "anonymized": "Звонил <PERSON>, оставил номер <PHONE>."}
+{"id": "old-0005", "spans": [[13, 26]], "ms": 12.91, "anonymized": "Обращение от <PERSON>, телефон для связи <PHONE>."}
+{"id": "old-0006", "spans": [[9, 38]], "ms": 30.77, "anonymized": "Контакт: <PERSON>, <PHONE>, <EMAIL>."}
+{"id": "old-0007", "spans": [[10, 25]], "ms": 12.19, "anonymized": "Жалоба от <PERSON>, контактный <PHONE>, почта <EMAIL>."}
+{"id": "old-0008", "spans": [[7, 22]], "ms": 11.81, "anonymized": "Звонил <PERSON>, оставил номер <PHONE>."}
+{"id": "old-0009", "spans": [[11, 37]], "ms": 13.0, "anonymized": "По вопросу <PERSON> — СНИЛС <SNILS>, телефон <PHONE>."}
+{"id": "old-0010", "spans": [[11, 29]], "ms": 13.76, "anonymized": "По вопросу <PERSON> — СНИЛС <SNILS>, телефон <PHONE>."}
+{"id": "old-0011", "spans": [], "ms": 10.78, "anonymized": "Документы приняты, проверка займёт два рабочих дня."}
+{"id": "old-0012", "spans": [[39, 52]], "ms": 11.7, "anonymized": "Прошу проверить ИНН <INN> клиента <PERSON>."}
+{"id": "old-0013", "spans": [], "ms": 10.93, "anonymized": "Спасибо за обращение, ваш вопрос обрабатывается."}
+{"id": "old-0014", "spans": [[13, 39]], "ms": 13.26, "anonymized": "Регистрация: <PERSON>, д.р. <DATE_OF_BIRTH>, почта <EMAIL>."}
+{"id": "old-0015", "spans": [[10, 29]], "ms": 12.64, "anonymized": "Жалоба от <PERSON>, контактный <PHONE>, почта <EMAIL>."}
+{"id": "old-0016", "spans": [[9, 25]], "ms": 12.98, "anonymized": "Менеджер <PERSON> перезвонит на <PHONE>."}
+{"id": "old-0017", "spans": [[41, 58]], "ms": 12.06, "anonymized": "Прошу проверить ИНН <INN> клиента <PERSON>."}
+{"id": "old-0018", "spans": [[10, 40]], "ms": 13.18, "anonymized": "Уважаемый <PERSON>! Ваш ИНН <INN> подтверждён."}
+{"id": "old-0019", "spans": [[15, 34]], "ms": 9.82, "anonymized": "Договор на имя <PERSON>, дата рождения <DATE_OF_BIRTH>."}
+{"id": "old-0020", "spans": [[9, 26]], "ms": 11.31, "anonymized": "Менеджер <PERSON> перезвонит на <PHONE>."}
+{"id": "old-0021", "spans": [[2, 22]], "ms": 12.73, "anonymized": "Я <PERSON>, мой СНИЛС <SNILS>, родилась <DATE_OF_BIRTH>."}
+{"id": "old-0022", "spans": [[14, 26]], "ms": 9.8, "anonymized": "Заявка №9399: <PERSON>, паспорт <PASSPORT>."}
+{"id": "old-0023", "spans": [[9, 21]], "ms": 11.57, "anonymized": "Контакт: <PERSON>, <PHONE>, <EMAIL>."}
+{"id": "old-0024", "spans": [[8, 34]], "ms": 14.17, "anonymized": "Клиент: <PERSON>, ИНН <INN>, СНИЛС <SNILS>."}
+{"id": "old-0025", "spans": [[16, 37]], "ms": 12.73, "anonymized": "Прошу записать: <PERSON>, <PHONE>, <EMAIL>."}
+{"id": "old-0026", "spans": [[12, 38]], "ms": 11.48, "anonymized": "Оформляю на <PERSON>, карта оплаты <CREDIT_CARD>."}
+{"id": "old-0027", "spans": [], "ms": 10.13, "anonymized": "Документы приняты, проверка займёт два рабочих дня."}
+{"id": "old-0028", "spans": [[63, 81]], "ms": 12.74, "anonymized": "Отправьте документы на почту <EMAIL>, получатель <PERSON>."}
+{"id": "old-0029", "spans": [[11, 28]], "ms": 13.41, "anonymized": "По вопросу <PERSON> — СНИЛС <SNILS>, телефон <PHONE>."}
+{"id": "old-0030", "spans": [[9, 22]], "ms": 10.88, "anonymized": "Контакт: <PERSON>, <PHONE>, <EMAIL>."}
+{"id": "old-0031", "spans": [], "ms": 10.03, "anonymized": "Спасибо за обращение, ваш вопрос обрабатывается."}
+{"id": "old-0032", "spans": [[10, 24]], "ms": 11.29, "anonymized": "Жалоба от <PERSON>, контактный <PHONE>, почта <EMAIL>."}
+{"id": "old-0033", "spans": [[12, 29]], "ms": 12.71, "anonymized": "Свяжитесь с <PERSON> по телефону <PHONE>."}
+{"id": "old-0034", "spans": [[17, 33]], "ms": 12.43, "anonymized": "Запись на приём: <PERSON>, дата рождения <DATE_OF_BIRTH>."}
+{"id": "old-0035", "spans": [[41, 68]], "ms": 12.88, "anonymized": "Прошу проверить ИНН <INN> клиента <PERSON>."}
+{"id": "old-0036", "spans": [], "ms": 10.33, "anonymized": "Документы приняты, проверка займёт два рабочих дня."}
+{"id": "old-0037", "spans": [[41, 65]], "ms": 12.98, "anonymized": "Прошу проверить ИНН <INN> клиента <PERSON>."}
+{"id": "old-0038", "spans": [[13, 26]], "ms": 12.29, "anonymized": "Регистрация: <PERSON>, д.р. <DATE_OF_BIRTH>, почта <EMAIL>."}
+{"id": "old-0039", "spans": [[13, 28]], "ms": 11.67, "anonymized": "Обращение от <PERSON>, телефон для связи <PHONE>."}
+{"id": "old-0040", "spans": [], "ms": 10.45, "anonymized": "Уточните, пожалуйста, детали вашего запроса."}
+{"id": "old-0041", "spans": [[15, 45]], "ms": 14.61, "anonymized": "Данные клиента <PERSON>: ИНН <INN>, паспорт <PASSPORT>."}
+{"id": "old-0042", "spans": [[13, 26]], "ms": 11.77, "anonymized": "Регистрация: <PERSON>, д.р. <DATE_OF_BIRTH>, почта <EMAIL>."}
+{"id": "old-0043", "spans": [[10, 40]], "ms": 13.76, "anonymized": "Жалоба от <PERSON>, контактный <PHONE>, почта <EMAIL>."}
+{"id": "old-0044", "spans": [[48, 59]], "ms": 11.38, "anonymized": "Перевод на карту <CREDIT_CARD> получателю <PERSON>."}
+{"id": "old-0045", "spans": [[12, 26]], "ms": 11.14, "anonymized": "Свяжитесь с <PERSON> по телефону <PHONE>."}
+{"id": "old-0046", "spans": [], "ms": 10.34, "anonymized": "Заявка зарегистрирована, ожидайте ответа в течение дня."}
+{"id": "old-0047", "spans": [[25, 38]], "ms": 11.0, "anonymized": "Здравствуйте, меня зовут <PERSON>, прошу помочь с заявкой."}
+{"id": "old-0048", "spans": [[21, 45]], "ms": 11.57, "anonymized": "Заказ принят. Клиент <PERSON>, email <EMAIL>."}
+{"id": "old-0049", "spans": [[7, 23]], "ms": 10.9, "anonymized": "Клиент <PERSON> обратился по вопросу кредита."}
+{"id": "old-0050", "spans": [[15, 43]], "ms": 12.41, "anonymized": "Данные клиента <PERSON>: ИНН <INN>, паспорт <PASSPORT>."}
+{"id": "old-0051", "spans": [[15, 28]], "ms": 10.91, "anonymized": "Договор на имя <PERSON>, дата рождения <DATE_OF_BIRTH>."}
+{"id": "old-0052", "spans": [[39, 64]], "ms": 11.54, "anonymized": "Прошу проверить ИНН <INN> клиента <PERSON>."}
+{"id": "old-0053", "spans": [[12, 33]], "ms": 10.26, "anonymized": "Оформляю на <PERSON>, карта оплаты <CREDIT_CARD>."}
+{"id": "old-0054", "spans": [], "ms": 9.22, "anonymized": "Уточните, пожалуйста, детали вашего запроса."}
+{"id": "old-0055", "spans": [[41, 59]], "ms": 10.64, "anonymized": "Прошу проверить ИНН <INN> клиента <PERSON>."}
+{"id": "old-0056", "spans": [[11, 36]], "ms": 12.32, "anonymized": "По вопросу <PERSON> — СНИЛС <SNILS>, телефон <PHONE>."}
+{"id": "old-0057", "spans": [[10, 24]], "ms": 12.49, "anonymized": "Жалоба от <PERSON>, контактный <PHONE>, почта <EMAIL>."}
+{"id": "old-0058", "spans": [[12, 28]], "ms": 12.65, "anonymized": "Свяжитесь с <PERSON> по телефону <PHONE>."}
+{"id": "old-0059", "spans": [[17, 31]], "ms": 12.57, "anonymized": "Добрый день, это <PERSON>. Мой ИНН <INN>."}
+{"id": "old-0060", "spans": [[8, 21]], "ms": 12.5, "anonymized": "Клиент: <PERSON>, ИНН <INN>, СНИЛС <SNILS>."}
+{"id": "old-0061", "spans": [[15, 32]], "ms": 11.18, "anonymized": "Договор на имя <PERSON>, дата рождения <DATE_OF_BIRTH>."}
+{"id": "old-0062", "spans": [[15, 31]], "ms": 11.72, "anonymized": "Договор на имя <PERSON>, дата рождения <DATE_OF_BIRTH>."}
+{"id": "old-0063", "spans": [[10, 26]], "ms": 11.36, "anonymized": "Уважаемый <PERSON>! Ваш ИНН <INN> подтверждён."}
+{"id": "old-0064", "spans": [[10, 25]], "ms": 13.19, "anonymized": "Жалоба от <PERSON>, контактный <PHONE>, почта <EMAIL>."}
+{"id": "old-0065", "spans": [[21, 36]], "ms": 11.34, "anonymized": "Заказ принят. Клиент <PERSON>, email <EMAIL>."}
+{"id": "old-0066", "spans": [[11, 36]], "ms": 13.93, "anonymized": "По вопросу <PERSON> — СНИЛС <SNILS>, телефон <PHONE>."}
+{"id": "old-0067", "spans": [[12, 26]], "ms": 11.42, "anonymized": "Свяжитесь с <PERSON> по телефону <PHONE>."}
+{"id": "old-0068", "spans": [], "ms": 9.96, "anonymized": "Уточните, пожалуйста, детали вашего запроса."}
+{"id": "old-0069", "spans": [[17, 29]], "ms": 12.45, "anonymized": "Добрый день, это <PERSON>. Мой ИНН <INN>."}
+{"id": "old-0070", "spans": [[13, 40]], "ms": 12.04, "anonymized": "Обращение от <PERSON>, телефон для связи <PHONE>."}
+{"id": "old-0071", "spans": [[9, 34]], "ms": 12.11, "anonymized": "Менеджер <PERSON> перезвонит на <PHONE>."}
+{"id": "old-0072", "spans": [[15, 30]], "ms": 11.5, "anonymized": "Договор на имя <PERSON>, дата рождения <DATE_OF_BIRTH>."}
+{"id": "old-0073", "spans": [[7, 20]], "ms": 11.55, "anonymized": "Звонил <PERSON>, оставил номер <PHONE>."}
+{"id": "old-0074", "spans": [[2, 30]], "ms": 13.22, "anonymized": "Я <PERSON>, мой СНИЛС <SNILS>, родилась <DATE_OF_BIRTH>."}
+{"id": "old-0075", "spans": [[62, 81]], "ms": 11.56, "anonymized": "Отправьте документы на почту <EMAIL>, получатель <PERSON>."}
+{"id": "old-0076", "spans": [[10, 35]], "ms": 11.97, "anonymized": "Уважаемый <PERSON>! Ваш ИНН <INN> подтверждён."}
+{"id": "old-0077", "spans": [], "ms": 10.5, "anonymized": "Спасибо за обращение, ваш вопрос обрабатывается."}
+{"id": "old-0078", "spans": [[7, 33]], "ms": 12.15, "anonymized": "Звонил <PERSON>, оставил номер <PHONE>."}
+{"id": "old-0079", "spans": [[12, 35]], "ms": 11.38, "anonymized": "Оформляю на <PERSON>, карта оплаты <CREDIT_CARD>."}
+{"id": "old-0080", "spans": [[12, 27]], "ms": 13.2, "anonymized": "Свяжитесь с <PERSON> по телефону <PHONE>."}
+{"id": "old-0081", "spans": [[48, 65]], "ms": 13.73, "anonymized": "Перевод на карту <CREDIT_CARD> получателю <PERSON>."}
+{"id": "old-0082", "spans": [[41, 55]], "ms": 14.91, "anonymized": "Прошу проверить ИНН <INN> клиента <PERSON>."}
+{"id": "old-0083", "spans": [[2, 21]], "ms": 15.68, "anonymized": "Я <PERSON>, мой СНИЛС <SNILS>, родилась <DATE_OF_BIRTH>."}
+{"id": "old-0084", "spans": [[13, 26]], "ms": 12.54, "anonymized": "Регистрация: <PERSON>, д.р. <DATE_OF_BIRTH>, почта <EMAIL>."}
+{"id": "old-0085", "spans": [[57, 80]], "ms": 13.36, "anonymized": "Отправьте документы на почту <EMAIL>, получатель <PERSON>."}
+{"id": "old-0086", "spans": [[13, 28]], "ms": 12.47, "anonymized": "Регистрация: <PERSON>, д.р. <DATE_OF_BIRTH>, почта <EMAIL>."}
+{"id": "old-0087", "spans": [[12, 38]], "ms": 12.48, "anonymized": "Оформляю на <PERSON>, карта оплаты <CREDIT_CARD>."}
+{"id": "old-0088", "spans": [[9, 36]], "ms": 11.96, "anonymized": "Менеджер <PERSON> перезвонит на <PHONE>."}
+{"id": "old-0089", "spans": [[14, 41]], "ms": 12.15, "anonymized": "Заявка №6950: <PERSON>, паспорт <PASSPORT>."}
+{"id": "old-0090", "spans": [[13, 38]], "ms": 12.52, "anonymized": "Регистрация: <PERSON>, д.р. <DATE_OF_BIRTH>, почта <EMAIL>."}
+{"id": "old-0091", "spans": [[0, 14]], "ms": 12.98, "anonymized": "<PERSON> обратился с паспортом <PASSPORT> и картой <CREDIT_CARD>."}
+{"id": "old-0092", "spans": [], "ms": 10.09, "anonymized": "Заявка зарегистрирована, ожидайте ответа в течение дня."}
+{"id": "old-0093", "spans": [], "ms": 10.31, "anonymized": "Спасибо за обращение, ваш вопрос обрабатывается."}
+{"id": "old-0094", "spans": [[21, 35]], "ms": 11.3, "anonymized": "Заказ принят. Клиент <PERSON>, email <EMAIL>."}
+{"id": "old-0095", "spans": [[39, 58]], "ms": 11.27, "anonymized": "Прошу проверить ИНН <INN> клиента <PERSON>."}
+{"id": "old-0096", "spans": [[10, 26]], "ms": 12.86, "anonymized": "Жалоба от <PERSON>, контактный <PHONE>, почта <EMAIL>."}
+{"id": "old-0097", "spans": [[10, 26]], "ms": 10.97, "anonymized": "Уважаемый <PERSON>! Ваш ИНН <INN> подтверждён."}
+{"id": "old-0098", "spans": [[10, 25]], "ms": 12.67, "anonymized": "Жалоба от <PERSON>, контактный <PHONE>, почта <EMAIL>."}
+{"id": "old-0099", "spans": [[16, 30]], "ms": 11.73, "anonymized": "Прошу записать: <PERSON>, <PHONE>, <EMAIL>."}
+{"id": "old-0100", "spans": [[2, 19]], "ms": 13.11, "anonymized": "Я <PERSON>, мой СНИЛС <SNILS>, родилась <DATE_OF_BIRTH>."}
+{"id": "old-0101", "spans": [[16, 30]], "ms": 11.03, "anonymized": "Прошу записать: <PERSON>, <PHONE>, <EMAIL>."}
+{"id": "old-0102", "spans": [[11, 35]], "ms": 12.76, "anonymized": "По вопросу <PERSON> — СНИЛС <SNILS>, телефон <PHONE>."}
+{"id": "old-0103", "spans": [[12, 37]], "ms": 12.35, "anonymized": "Оформляю на <PERSON>, карта оплаты <CREDIT_CARD>."}
+{"id": "old-0104", "spans": [[16, 29]], "ms": 11.43, "anonymized": "Прошу записать: <PERSON>, <PHONE>, <EMAIL>."}
+{"id": "old-0105", "spans": [[14, 28]], "ms": 10.76, "anonymized": "Заявка №6681: <PERSON>, паспорт <PASSPORT>."}
+{"id": "old-0106", "spans": [[11, 26]], "ms": 13.63, "anonymized": "По вопросу <PERSON> — СНИЛС <SNILS>, телефон <PHONE>."}
+{"id": "old-0107", "spans": [[58, 73]], "ms": 11.98, "anonymized": "Отправьте документы на почту <EMAIL>, получатель <PERSON>."}
+{"id": "old-0108", "spans": [[13, 26]], "ms": 11.16, "anonymized": "Регистрация: <PERSON>, д.р. <DATE_OF_BIRTH>, почта <EMAIL>."}
+{"id": "old-0109", "spans": [[21, 32]], "ms": 10.91, "anonymized": "Заказ принят. Клиент <PERSON>, email <EMAIL>."}
+{"id": "old-0110", "spans": [], "ms": 9.74, "anonymized": "Здравствуйте, чем могу помочь?"}
+{"id": "old-0111", "spans": [[48, 63]], "ms": 10.95, "anonymized": "Перевод на карту <CREDIT_CARD> получателю <PERSON>."}
+{"id": "old-0112", "spans": [[57, 74]], "ms": 11.18, "anonymized": "Отправьте документы на почту <EMAIL>, получатель <PERSON>."}
+{"id": "old-0113", "spans": [[13, 30]], "ms": 11.18, "anonymized": "Регистрация: <PERSON>, д.р. <DATE_OF_BIRTH>, почта <EMAIL>."}
+{"id": "old-0114", "spans": [[48, 75]], "ms": 11.5, "anonymized": "Перевод на карту <CREDIT_CARD> получателю <PERSON>."}
+{"id": "old-0115", "spans": [[13, 32]], "ms": 11.05, "anonymized": "Регистрация: <PERSON>, д.р. <DATE_OF_BIRTH>, почта <EMAIL>."}
+{"id": "old-0116", "spans": [[48, 62]], "ms": 10.34, "anonymized": "Перевод на карту <CREDIT_CARD> получателю <PERSON>."}
+{"id": "old-0117", "spans": [[8, 35]], "ms": 11.65, "anonymized": "Клиент: <PERSON>, ИНН <INN>, СНИЛС <SNILS>."}
+{"id": "old-0118", "spans": [], "ms": 10.06, "anonymized": "Уточните, пожалуйста, детали вашего запроса."}
+{"id": "old-0119", "spans": [[61, 78]], "ms": 10.82, "anonymized": "Отправьте документы на почту <EMAIL>, получатель <PERSON>."}
+{"id": "old-0120", "spans": [[13, 28]], "ms": 11.15, "anonymized": "Регистрация: <PERSON>, д.р. <DATE_OF_BIRTH>, почта <EMAIL>."}
+{"id": "old-0121", "spans": [[21, 39]], "ms": 10.76, "anonymized": "Заказ принят. Клиент <PERSON>, email <EMAIL>."}
+{"id": "old-0122", "spans": [[12, 26]], "ms": 11.32, "anonymized": "Свяжитесь с <PERSON> по телефону <PHONE>."}
+{"id": "old-0123", "spans": [], "ms": 8.73, "anonymized": "Уточните, пожалуйста, детали вашего запроса."}
+{"id": "old-0124", "spans": [[9, 22]], "ms": 10.75, "anonymized": "Менеджер <PERSON> перезвонит на <PHONE>."}
+{"id": "old-0125", "spans": [[13, 27]], "ms": 10.77, "anonymized": "Регистрация: <PERSON>, д.р. <DATE_OF_BIRTH>, почта <EMAIL>."}
+{"id": "old-0126", "spans": [], "ms": 10.85, "anonymized": "Спасибо за обращение, ваш вопрос обрабатывается."}
+{"id": "old-0127", "spans": [[0, 17]], "ms": 11.75, "anonymized": "<PERSON> обратился с паспортом <PASSPORT> и картой <CREDIT_CARD>."}
+{"id": "old-0128", "spans": [[2, 15]], "ms": 11.74, "anonymized": "Я <PERSON>, мой СНИЛС <SNILS>, родилась <DATE_OF_BIRTH>."}
+{"id": "old-0129", "spans": [[7, 22]], "ms": 11.2, "anonymized": "Звонил <PERSON>, оставил номер <PHONE>."}
+{"id": "old-0130", "spans": [[16, 43]], "ms": 12.18, "anonymized": "Прошу записать: <PERSON>, <PHONE>, <EMAIL>."}
+{"id": "old-0131", "spans": [[12, 38]], "ms": 11.81, "anonymized": "Свяжитесь с <PERSON> по телефону <PHONE>."}
+{"id": "old-0132", "spans": [[15, 35]], "ms": 10.44, "anonymized": "Договор на имя <PERSON>, дата рождения <DATE_OF_BIRTH>."}
+{"id": "old-0133", "spans": [[11, 24]], "ms": 12.14, "anonymized": "По вопросу <PERSON> — СНИЛС <SNILS>, телефон <PHONE>."}
+{"id": "old-0134", "spans": [[21, 40]], "ms": 11.1, "anonymized": "Заказ принят. Клиент <PERSON>, email <EMAIL>."}
+{"id": "old-0135", "spans": [[16, 28]], "ms": 11.12, "anonymized": "Прошу записать: <PERSON>, <PHONE>, <EMAIL>."}
+{"id": "old-0136", "spans": [[7, 18]], "ms": 11.09, "anonymized": "Звонил <PERSON>, оставил номер <PHONE>."}
+{"id": "old-0137", "spans": [[9, 33]], "ms": 11.21, "anonymized": "Менеджер <PERSON> перезвонит на <PHONE>."}
+{"id": "old-0138", "spans": [], "ms": 8.74, "anonymized": "Уточните, пожалуйста, детали вашего запроса."}
+{"id": "old-0139", "spans": [[16, 32]], "ms": 10.82, "anonymized": "Прошу записать: <PERSON>, <PHONE>, <EMAIL>."}
+{"id": "old-0140", "spans": [], "ms": 7.79, "anonymized": "Здравствуйте, чем могу помочь?"}
+{"id": "old-0141", "spans": [[13, 45]], "ms": 12.52, "anonymized": "Регистрация: <PERSON>, д.р. <DATE_OF_BIRTH>, почта <EMAIL>."}
+{"id": "old-0142", "spans": [[2, 25]], "ms": 13.65, "anonymized": "Я <PERSON>, мой СНИЛС <SNILS>, родилась <DATE_OF_BIRTH>."}
+{"id": "old-0143", "spans": [[15, 30]], "ms": 11.83, "anonymized": "Данные клиента <PERSON>: ИНН <INN>, паспорт <PASSPORT>."}
+{"id": "old-0144", "spans": [[17, 30]], "ms": 11.47, "anonymized": "Добрый день, это <PERSON>. Мой ИНН <INN>."}
+{"id": "old-0145", "spans": [[14, 38]], "ms": 10.84, "anonymized": "Заявка №2477: <PERSON>, паспорт <PASSPORT>."}
+{"id": "old-0146", "spans": [[10, 33]], "ms": 10.84, "anonymized": "Уважаемый <PERSON>! Ваш ИНН <INN> подтверждён."}
+{"id": "old-0147", "spans": [[9, 36]], "ms": 11.53, "anonymized": "Контакт: <PERSON>, <PHONE>, <EMAIL>."}
+{"id": "old-0148", "spans": [[16, 30]], "ms": 11.86, "anonymized": "Прошу записать: <PERSON>, <PHONE>, <EMAIL>."}
+{"id": "old-0149", "spans": [[17, 36]], "ms": 10.96, "anonymized": "Запись на приём: <PERSON>, дата рождения <DATE_OF_BIRTH>."}
+{"id": "old-0150", "spans": [[11, 39]], "ms": 11.43, "anonymized": "По вопросу <PERSON> — СНИЛС <SNILS>, телефон <PHONE>."}
