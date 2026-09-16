@@ -81,8 +81,7 @@ def make_system(code):
             d.tag_ner(tagger)
             return [(s.start, s.stop) for s in d.spans if s.type == "PER"]
     elif code.startswith(("S3", "S4")):
-        from transformers import (AutoModelForTokenClassification, AutoTokenizer,
-                                  pipeline)
+        from transformers import AutoModelForTokenClassification, AutoTokenizer, pipeline
         model_dir = BASE_MODEL if code.startswith("S3") else PROD_MODEL
         # По умолчанию словоуровневая склейка "first": метка слова = метка его
         # первого подтокена — ровно так модель обучалась. Стратегия "simple"

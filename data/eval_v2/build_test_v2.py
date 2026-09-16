@@ -543,7 +543,7 @@ def frames_of_template(tpl):
     """Все варианты рамки шаблона: слоты -> <X>, {g:..} в обоих родах."""
     variants = set()
     for gi in (0, 1):
-        def sub(m):
+        def sub(m, gi=gi):
             slot = m.group(1)
             if slot.startswith("g:"):
                 return slot[2:].split("|")[gi]
