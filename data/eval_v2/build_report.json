@@ -1,0 +1,75 @@
+{
+  "seed": 20260915,
+  "examples_total": 480,
+  "examples_pii": 400,
+  "examples_neg": 80,
+  "templates": {
+    "pii": 100,
+    "neg_slot": 18,
+    "neg_fixed": 16
+  },
+  "entities_by_type": {
+    "PERSON": 424,
+    "PHONE_NUMBER": 52,
+    "EMAIL_ADDRESS": 28,
+    "CREDIT_CARD": 16,
+    "DATE_OF_BIRTH": 20,
+    "INN": 24,
+    "SNILS": 12,
+    "PASSPORT": 20
+  },
+  "person_by_format": {
+    "ИОФ": 59,
+    "ИФ": 52,
+    "ФИн": 62,
+    "ФИО": 59,
+    "ИО": 9,
+    "Ф": 62,
+    "И": 13,
+    "ФИ": 41,
+    "ИнФ": 67
+  },
+  "person_by_case": {
+    "nomn": 232,
+    "ablt": 28,
+    "datv": 48,
+    "gent": 92,
+    "accs": 24
+  },
+  "person_by_surname_class": {
+    "sky": 78,
+    "cons": 80,
+    "ov": 128,
+    "fixed": 116,
+    "None": 22
+  },
+  "person_lowercase": 62,
+  "person_format_unseen_in_training": 137,
+  "checks": {
+    "lexicon_overlap_with_training": {
+      "first": [],
+      "patronymic": [],
+      "surname": [],
+      "city": [],
+      "street": [],
+      "org": [],
+      "noun": []
+    },
+    "exact_template_matches_with_training": [],
+    "max_jaccard_over_templates": 0.429,
+    "templates_with_jaccard_ge_0_5": [],
+    "training_files_compared": [
+      "train/train.jsonl",
+      "dev/dev.jsonl",
+      "test/test.jsonl",
+      "train/train_negatives.jsonl",
+      "dev/dev_negatives.jsonl"
+    ],
+    "training_template_sources": [
+      "generate_dataset.TEMPLATES",
+      "augment_negatives.*_TEMPLATES"
+    ]
+  },
+  "failures": [],
+  "sha256_test_v2": "686a51bd59801bbe519ac7c5c9c1e7926ce5ea160fcb627355223931baf300f6"
+}
