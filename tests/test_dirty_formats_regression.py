@@ -150,3 +150,34 @@ def test_glued_first_name_edge(text, must_mask):
     out = anonymize_text(text)["anonymized"]
     leaked = [v for v in must_mask if v in out]
     assert not leaked, f"утечка первого имени при склейке: {leaked}\nвывод: {out}"
+
+
+# Фамилия, совпадающая с нарицательным словом (Мельник, Коваль, Кузнец, Горбач).
+# Найдено 17.09.2026 пробой фильтра ложных PERSON: модель фамилию находила, а правило
+# F3 («одно словарное нарицательное слово») её выбрасывало — фамилия утекала. dev-наборы
+# таких фамилий не содержали, поэтому метрики этапа 2 дыру не показали.
+NOUN_SURNAME_CASES = [
+    ("Клиент Мельник просит перезвонить", "Мельник"),
+    ("Сотрудник Коваль не ответил", "Коваль"),
+    ("Добрый день, меня зовут Кузнец, жду ответа", "Кузнец"),
+    ("Исполнитель по заявке Кузнец, телефон не указан", "Кузнец"),
+    ("Ответ подготовил Горбач 12.09", "Горбач"),
+    ("Подпись: Горбач", "Горбач"),
+]
+
+
+@pytest.mark.parametrize("text,surname", NOUN_SURNAME_CASES,
+                         ids=[c[0] for c in NOUN_SURNAME_CASES])
+def test_noun_surname_kept_by_filter(text, surname):
+    """Фильтр не выбрасывает фамилию-нарицательное после слова-роли (без модели)."""
+    from app.person_filters import reject_reason
+    i = text.index(surname)
+    assert reject_reason(text, i, i + len(surname)) is None
+
+
+@pytest.mark.requires_model
+@pytest.mark.parametrize("text,surname", NOUN_SURNAME_CASES,
+                         ids=[c[0] for c in NOUN_SURNAME_CASES])
+def test_noun_surname_not_leaked(text, surname):
+    out = anonymize_text(text)["anonymized"]
+    assert surname not in out, "утечка фамилии, совпадающей с нарицательным словом"
