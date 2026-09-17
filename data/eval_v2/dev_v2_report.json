@@ -1,0 +1,64 @@
+{
+  "seed": 20260917,
+  "purpose": "настройка (не приёмка)",
+  "examples_total": 254,
+  "examples_pii": 200,
+  "examples_neg": 54,
+  "entities_by_type": {
+    "PERSON": 204,
+    "EMAIL_ADDRESS": 12,
+    "PHONE_NUMBER": 20,
+    "SNILS": 8,
+    "DATE_OF_BIRTH": 8,
+    "INN": 8,
+    "PASSPORT": 8,
+    "CREDIT_CARD": 12
+  },
+  "person_by_format": {
+    "ФИО": 16,
+    "ИнФ": 40,
+    "ФИн": 19,
+    "ФИ": 25,
+    "ИОФ": 32,
+    "ИФ": 35,
+    "Ф": 27,
+    "И": 7,
+    "ИО": 3
+  },
+  "person_lowercase": 32,
+  "max_jaccard_training": 0.429,
+  "max_jaccard_v2": 0.429,
+  "lexicon_overlap": {
+    "first": {
+      "training": [],
+      "v2": []
+    },
+    "patronymic": {
+      "training": [],
+      "v2": []
+    },
+    "surname": {
+      "training": [],
+      "v2": []
+    },
+    "city": {
+      "training": [],
+      "v2": []
+    },
+    "street": {
+      "training": [],
+      "v2": []
+    },
+    "org": {
+      "training": [],
+      "v2": []
+    },
+    "noun": {
+      "training": [],
+      "v2": []
+    }
+  },
+  "declension_mismatches_with_pymorphy": [],
+  "failures": [],
+  "sha256": "7a1dd39d3ae3be2a009f53633274c16585f8b1bf6d5f592984c6afec16c09d58"
+}

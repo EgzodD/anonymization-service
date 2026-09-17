@@ -37,6 +37,9 @@ DATASETS = {
     "old": os.path.join(ROOT, "data", "training", "test", "test.jsonl"),
     # сторонний набор с независимой разметкой, см. load_bench.py
     "bench": os.path.join(HERE, "bench.jsonl"),
+    # dev-наборы — ТОЛЬКО для настройки (правило П1 плана улучшений)
+    "dev_v2": os.path.join(HERE, "dev_v2.jsonl"),
+    "dev_rmr": os.path.join(HERE, "dev_rmr.jsonl"),
 }
 SYSTEMS = {
     "S1": "spaCy ru_core_news_lg (NER-бэкенд Presidio)",

@@ -1,0 +1,31 @@
+{
+  "source": "redmadrobot-rnd/pii_train (MIT), случайная выборка",
+  "purpose": "настройка (не приёмка)",
+  "seed": 20260917,
+  "examples": 1500,
+  "examples_neg": 757,
+  "skipped_text_also_in_benchmark": 0,
+  "skipped_alignment_failed": 130,
+  "entities_by_type": {
+    "PERSON": 338,
+    "OTHER_CITY": 255,
+    "OTHER_STREET": 206,
+    "PHONE_NUMBER": 190,
+    "OTHER_COUNTRY": 189,
+    "EMAIL_ADDRESS": 187,
+    "OTHER_URL": 184,
+    "OTHER_HOUSE": 170,
+    "OTHER_DISTRICT": 163,
+    "PASSPORT": 146,
+    "OTHER_REGION": 143,
+    "OTHER_DRIVER_LICENSE": 126,
+    "OTHER_BIRTH_CERTIFICATE": 125,
+    "OTHER_MILITARY_ID": 122,
+    "OTHER_IP_ADDRESS": 87,
+    "SNILS": 79,
+    "INN": 70,
+    "CREDIT_CARD": 68,
+    "OTHER_OMS": 59
+  },
+  "sha256": "4bcc5a9fbcf50134b487df53c96be4cf13970222dc27661ebf3c9f7de02ab685"
+}
