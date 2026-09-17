@@ -10,7 +10,8 @@ held-out, порождённый тем же генератором, что и �
 (data/eval_v2/dev_v2.jsonl — наш домен, dev_rmr.jsonl — чужой), по трём
 показателям:
   * доля значений ПДн, оставшихся в тексте (утечки);
-  * доля текстов без ПДн, где сервис что-либо замаскировал (перемаскирование);
+  * доля текстов вовсе без разметки, где сервис что-либо замаскировал
+    (перемаскирование);
   * доля полностью замаскированных имён.
 
 Пороги лежат в data/eval_v2/quality_thresholds.json и только ужесточаются.
@@ -39,7 +40,7 @@ def _measure(name):
     path = os.path.join(EVAL_DIR, f"{name}.jsonl")
     if not os.path.isfile(path):
         pytest.skip(f"dev-набор не найден: {path}")
-    vals = leaked = neg = neg_masked = gold_p = full_p = 0
+    vals = leaked = clean = clean_masked = gold_p = full_p = 0
     leak_types, leak_ids = Counter(), []
     with open(path, encoding="utf-8") as f:
         rows = [json.loads(x) for x in f if x.strip()]
@@ -61,12 +62,14 @@ def _measure(name):
                 leaked += 1
                 leak_types[s["type"]] += 1
                 leak_ids.append(r["id"])
-        if r["subset"] == "neg":
-            neg += 1
-            neg_masked += int(anon != text)
+        # перемаскирование — только тексты вовсе без разметки: в «neg» чужого набора
+        # встречаются ПДн неподдерживаемых типов (права, военный билет, ОМС)
+        if not r["spans"]:
+            clean += 1
+            clean_masked += int(anon != text)
     return {
         "leak_rate": leaked / vals if vals else 0.0,
-        "neg_any_mask_rate": neg_masked / neg if neg else 0.0,
+        "neg_any_mask_rate": clean_masked / clean if clean else 0.0,
         "person_full_masked": full_p / gold_p if gold_p else 1.0,
         "leaked": leaked, "vals": vals, "leak_types": dict(leak_types),
         "leak_ids": leak_ids[:10],

@@ -32,7 +32,7 @@ sys.path.insert(0, HERE)
 import metrics as M  # noqa: E402
 from run_eval import load_dataset  # noqa: E402
 
-FIELDS = ["gold_p", "pred_p", "tp_p", "full_p", "neg", "neg_person", "neg_anymask",
+FIELDS = ["gold_p", "pred_p", "tp_p", "full_p", "neg", "neg_person", "clean", "clean_anymask",
           "vals", "leaked"]
 
 
@@ -48,9 +48,14 @@ def example_vector(r, p):
     vals = [s for s in r["spans"] if not s["type"].startswith("OTHER_")]
     leaked = [s for s in vals if text[s["start"]:s["stop"]] in anon]
     is_neg = r["subset"] == "neg"
+    # Перемаскирование считается только по текстам ВОВСЕ без разметки. В чужих
+    # наборах «neg» (нет поддерживаемых нами типов) часто содержит ПДн, для которых
+    # у нас нет типа: водительское удостоверение, военный билет, ОМС. Маска на них —
+    # не перемаскирование, а правильное закрытие ПДн под неточной меткой.
+    is_clean = not r["spans"]
     return np.array([
         c["gold_n"], c["pred_n"], c["tp_strict"], c["full_masked"],
-        int(is_neg), c["neg_texts_with_pred"], int(is_neg and anon != text),
+        int(is_neg), c["neg_texts_with_pred"], int(is_clean), int(is_clean and anon != text),
         len(vals), len(leaked),
     ], dtype=float), leaked
 
@@ -67,13 +72,14 @@ def summarize(t):
         "ФИО: лишних масок (шт.)": t["pred_p"] - t["tp_p"],
         "ФИО: пропущено имён (шт.)": t["gold_p"] - t["full_p"],
         "Без ПДн: ложное ФИО (доля текстов)": t["neg_person"] / t["neg"] if t["neg"] else 0.0,
-        "Без ПДн: любая маска (доля текстов)": t["neg_anymask"] / t["neg"] if t["neg"] else 0.0,
+        "Без разметки: любая маска (доля текстов)": (t["clean_anymask"] / t["clean"]
+                                                     if t["clean"] else 0.0),
         "Утечки ПДн, все типы (доля)": t["leaked"] / t["vals"] if t["vals"] else 0.0,
     }
 
 
 BOOT = ["ФИО: замаскировано полностью", "ФИО: F1", "Без ПДн: ложное ФИО (доля текстов)",
-        "Без ПДн: любая маска (доля текстов)", "Утечки ПДн, все типы (доля)"]
+        "Без разметки: любая маска (доля текстов)", "Утечки ПДн, все типы (доля)"]
 
 
 def main():
@@ -118,7 +124,7 @@ def main():
         for s in lb:
             if (s["start"], s["stop"]) not in ka:
                 fixed_leak.append((r, s))
-        if r["subset"] == "neg":
+        if not r["spans"]:
             ab, aa = PB[r["id"]].get("anonymized", r["text"]), PA[r["id"]].get("anonymized", r["text"])
             if ab == r["text"] and aa != r["text"]:
                 broken_mask.append((r, aa))
@@ -159,7 +165,7 @@ def main():
         print(f"  {t:36}{type_b[t]:9}{type_a[t]:9}{type_tot[t]:9}")
 
     print(f"\nИСПРАВЛЕНО утечек: {len(fixed_leak)}   СЛОМАНО (новые утечки): {len(broken_leak)}   "
-          f"новых лишних масок в текстах без ПДн: {len(broken_mask)}")
+          f"новых масок в текстах без разметки: {len(broken_mask)}")
     for r, s in broken_leak[:a.show]:
         print(f"  [утечка {s['type']}] {r['id']}: {r['text'][s['start']:s['stop']]!r}  "
               f"<- {r['text'][:80]!r}")
