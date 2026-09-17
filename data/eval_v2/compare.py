@@ -90,7 +90,7 @@ def main():
     ap.add_argument("--n-iter", type=int, default=5000)
     ap.add_argument("--show", type=int, default=15, help="сколько сломанных примеров показать")
     a = ap.parse_args()
-    if a.dataset in ("v2", "bench"):
+    if a.dataset in ("v2", "bench", "ext"):
         print(f"ВНИМАНИЕ: «{a.dataset}» — приёмочный набор. По правилу П1 настраиваться по нему "
               "нельзя; сравнение допустимо только на финальном замере (этап 4).\n")
     before = a.before or os.path.join(HERE, "results", "baseline", f"preds_S5_{a.dataset}.jsonl")

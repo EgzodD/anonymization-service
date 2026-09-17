@@ -30,6 +30,9 @@ sys.path.insert(0, ROOT)
 import metrics as M  # noqa: E402
 
 PROD_MODEL = os.path.join(ROOT, "models", "person_ruBERT")
+# Кандидат этапа 3: --model-dir подменяет модель в S4 и S5, --tag отделяет файлы
+# предсказаний (preds_S5-<tag>_<набор>.jsonl), чтобы не затереть прогон боевой модели.
+MODEL_OVERRIDE = {"dir": None}
 BASE_MODEL = os.path.join(ROOT, "models", "person_ruBERT_baseline")
 
 DATASETS = {
@@ -113,7 +116,7 @@ def make_system(code):
             return [(s.start, s.stop) for s in d.spans if s.type == "PER"]
     elif code.startswith(("S3", "S4")):
         from transformers import AutoModelForTokenClassification, AutoTokenizer, pipeline
-        model_dir = BASE_MODEL if code.startswith("S3") else PROD_MODEL
+        model_dir = BASE_MODEL if code.startswith("S3") else (MODEL_OVERRIDE["dir"] or PROD_MODEL)
         # По умолчанию словоуровневая склейка "first": метка слова = метка его
         # первого подтокена — ровно так модель обучалась. Стратегия "simple"
         # рвёт слово там, где метка меняется внутри него, и порождает обрывки
@@ -144,7 +147,7 @@ def make_system(code):
                     out.append((int(ent["start"]), int(ent["end"])))
             return merge_adjacent(text, out)
     elif code == "S5":
-        os.environ["PERSON_MODEL_DIR"] = PROD_MODEL
+        os.environ["PERSON_MODEL_DIR"] = MODEL_OVERRIDE["dir"] or PROD_MODEL
         from app.anonymizer import anonymize_text
         def run(text):
             res = anonymize_text(text)
@@ -156,12 +159,12 @@ def make_system(code):
     return run
 
 
-def cmd_run(code, dataset):
+def cmd_run(code, dataset, tag=""):
     os.makedirs(RESULTS, exist_ok=True)
     rows = load_dataset(dataset)
     run = make_system(code)
     run(rows[0]["text"])                       # прогрев
-    out_path = os.path.join(RESULTS, f"preds_{code}_{dataset}.jsonl")
+    out_path = os.path.join(RESULTS, f"preds_{code}{'-' + tag if tag else ''}_{dataset}.jsonl")
     with open(out_path, "w", encoding="utf-8") as f:
         for r in rows:
             t0 = time.perf_counter()
@@ -316,11 +319,15 @@ if __name__ == "__main__":
     ap.add_argument("--system", choices=list(SYSTEMS))
     ap.add_argument("--dataset", choices=list(DATASETS), default="v2")
     ap.add_argument("--aggregate", action="store_true")
+    ap.add_argument("--model-dir", help="модель-кандидат вместо боевой (S4, S5)")
+    ap.add_argument("--tag", default="", help="метка файла предсказаний кандидата")
     ap.add_argument("--n-iter", type=int, default=10000)
     a = ap.parse_args()
     if a.aggregate:
         cmd_aggregate(a.n_iter)
     elif a.system:
-        cmd_run(a.system, a.dataset)
+        if a.model_dir:
+            MODEL_OVERRIDE["dir"] = os.path.abspath(a.model_dir)
+        cmd_run(a.system, a.dataset, a.tag)
     else:
         ap.error("нужно --system или --aggregate")

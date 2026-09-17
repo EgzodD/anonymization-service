@@ -1,0 +1,54 @@
+{
+  "pos_templates": 118,
+  "neg_templates": 62,
+  "dropped_too_similar": [
+    [
+      "Спасибо {P:datv:short}, всё решилось",
+      0.5
+    ],
+    [
+      "Посылку заберёт {P:nomn:full}, паспорт будет с собой",
+      0.5
+    ],
+    [
+      "держатель карты {P:nomn:full}",
+      1.0
+    ],
+    [
+      "Исполнитель: {P:nomn:full}",
+      0.5
+    ],
+    [
+      "Возврат оформлен на {P:accs:full}",
+      0.6
+    ],
+    [
+      "{P:nomn:short}, спасибо за помощь",
+      0.6
+    ],
+    [
+      "Остановка «{street}» перенесена",
+      0.5
+    ]
+  ],
+  "max_jaccard_kept": 0.429,
+  "lexicon": {
+    "male": 81,
+    "female": 71,
+    "patronymic_pairs": 39,
+    "surnames": {
+      "ov": 93,
+      "sky": 22,
+      "fixed": 40,
+      "cons": 25,
+      "soft": 5
+    },
+    "cities": 48,
+    "streets": 31,
+    "orgs": 41
+  },
+  "examples": {
+    "pos": 5000,
+    "neg": 4500
+  }
+}
