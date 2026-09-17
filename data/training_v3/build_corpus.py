@@ -24,6 +24,7 @@
 """
 import json
 import os
+import re
 import sys
 from collections import Counter
 
@@ -43,19 +44,61 @@ def read_jsonl(path):
         return [json.loads(x) for x in f if x.strip()]
 
 
-def person_tags(tokens, src_tags):
-    """Теги источника -> B/I-PERSON. Соседние части имени (через точки) — одна сущность."""
-    is_part = [t[2:] in PARTS for t in src_tags]
-    out, inside = [], False
-    for i, tok in enumerate(tokens):
-        if is_part[i]:
-            out.append("I-PERSON" if inside else "B-PERSON")
-            inside = True
-        elif inside and set(tok) == {"."} and i + 1 < len(tokens) and is_part[i + 1]:
-            out.append("I-PERSON")          # точка между частями имени
+_INITIAL = re.compile(r"^(?:[А-ЯЁA-Z]\.){1,2}$|^[А-ЯЁA-Z]$")
+
+
+def _initial_run(tokens, i, step):
+    """Длина цепочки инициалов, начиная с позиции i в направлении step (0, если её нет).
+
+    Инициал — заглавная буква, за которой идёт точка отдельным токеном («С», «.»),
+    или токен вида «С.»/«С.С.». Без точки одиночная буква — не инициал: «Я Иван».
+    """
+    n, run, j = len(tokens), 0, i
+    while 0 <= j < n and run < 6:
+        t = tokens[j]
+        if step > 0:
+            if _INITIAL.match(t) and (t.endswith(".") or (j + 1 < n and tokens[j + 1] == ".")):
+                j += 1 if t.endswith(".") else 2
+            else:
+                break
         else:
-            out.append("O")
-            inside = False
+            if t == "." and j - 1 >= 0 and re.fullmatch(r"[А-ЯЁA-Z]", tokens[j - 1]):
+                j -= 2
+            elif _INITIAL.match(t) and t.endswith("."):
+                j -= 1
+            else:
+                break
+        run = abs(j - i)
+    return run
+
+
+def person_tags(tokens, src_tags):
+    """Теги источника -> B/I-PERSON.
+
+    Соседние части имени (через точки) — одна сущность. Инициалы вплотную к части
+    имени («Мехренцеву С. С.», «И. В. Кузнецова») включаются в сущность: в pii_train
+    они размечены как O (840 случаев) — для их схемы это допустимо, но для
+    обезличивания инициалы с фамилией идентифицируют человека. Без этой правки
+    модель, обученная на pii_train, переставала скрывать инициалы (эксперимент A:
+    35 из 51 имени в таких форматах на dev_v2 закрыты не полностью).
+    """
+    n = len(tokens)
+    mark = [t[2:] in PARTS for t in src_tags]
+    for i in range(1, n - 1):                      # точка между частями имени
+        if set(tokens[i]) == {"."} and mark[i - 1] and mark[i + 1]:
+            mark[i] = True
+    base = list(mark)
+    for i in range(n):
+        if base[i] and (i + 1 == n or not base[i + 1]):          # правый край имени
+            for j in range(i + 1, i + 1 + _initial_run(tokens, i + 1, +1)):
+                mark[j] = True
+        if base[i] and (i == 0 or not base[i - 1]):              # левый край имени
+            k = _initial_run(tokens, i - 1, -1)
+            for j in range(i - k, i):
+                mark[j] = True
+    out = []
+    for i in range(n):
+        out.append(("I-PERSON" if i and mark[i - 1] else "B-PERSON") if mark[i] else "O")
     return out
 
 
