@@ -37,6 +37,9 @@ DATASETS = {
     "old": os.path.join(ROOT, "data", "training", "test", "test.jsonl"),
     # сторонний набор с независимой разметкой, см. load_bench.py
     "bench": os.path.join(HERE, "bench.jsonl"),
+    # третий внешний набор, персоны из factRuEval-2016, см. load_ext.py и поправку 2.
+    # Только для финальной приёмки — до этапа 4 ни одна система на нём не запускается.
+    "ext": os.path.join(HERE, "ext.jsonl"),
     # dev-наборы — ТОЛЬКО для настройки (правило П1 плана улучшений)
     "dev_v2": os.path.join(HERE, "dev_v2.jsonl"),
     "dev_rmr": os.path.join(HERE, "dev_rmr.jsonl"),

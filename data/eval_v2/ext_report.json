@@ -1,0 +1,13 @@
+{
+  "source": "dialogue-evaluation/factRuEval-2016 testset (MIT), commit dfe96237fce79fde13b2021d1938587e4ea3042e",
+  "documents": 132,
+  "paragraphs": 995,
+  "paragraphs_with_person": 572,
+  "paragraphs_clean": 417,
+  "entities_by_type": {
+    "PERSON": 1345,
+    "OTHER_PERSON_NICK": 46
+  },
+  "sha256": "6cd969ca1f1e784dd1e69285136f8be0c8bd24cb392e4131204674138918888f",
+  "note": "Только для финальной приёмки (правило П1). OTHER_PERSON_NICK в метрики не входит."
+}
