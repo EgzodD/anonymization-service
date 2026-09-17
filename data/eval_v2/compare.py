@@ -164,6 +164,24 @@ def main():
     for t in sorted(type_tot):
         print(f"  {t:36}{type_b[t]:9}{type_a[t]:9}{type_tot[t]:9}")
 
+    # Имя, которое было закрыто хотя бы частично, а стало открыто полностью. Метрика
+    # «замаскировано полностью» этого не видит: если имя и раньше было закрыто не
+    # целиком, её значение не меняется, хотя приватность стала хуже.
+    uncovered = []
+    for r in rows:
+        text = r["text"]
+        for s in r["spans"]:
+            if s["type"] != "PERSON":
+                continue
+            g = (s["start"], s["stop"])
+            def touched(p, g=g):
+                return any(max(0, min(b, g[1]) - max(a, g[0])) > 0 for a, b in p["spans"])
+            if touched(PB[r["id"]]) and not touched(PA[r["id"]]):
+                uncovered.append((r, text[g[0]:g[1]]))
+    print(f"\nИмён, ставших полностью открытыми: {len(uncovered)}")
+    for r, v in uncovered[:a.show]:
+        print(f"  [открыто] {r['id']}: {v!r}")
+
     print(f"\nИСПРАВЛЕНО утечек: {len(fixed_leak)}   СЛОМАНО (новые утечки): {len(broken_leak)}   "
           f"новых масок в текстах без разметки: {len(broken_mask)}")
     for r, s in broken_leak[:a.show]:

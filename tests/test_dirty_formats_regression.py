@@ -123,10 +123,11 @@ GLUED_NAME_CASES = [
     ("СпасибоИван Петров подтвердил", ["Иван", "Петров"]),
 ]
 
-# Вырожденный вход: слово слито с ПЕРВЫМ именем без разделителя, и модель может
-# вовсе не отдать это имя (тегает только фамилию) — фильтр не маскирует то, чего
-# модель не нашла. В реальных текстах там пробел/запятая, recall 100%. ML-долг.
-GLUED_FIRST_NAME_XFAIL = [
+# Слово слито с ПЕРВЫМ именем без разделителя. Раньше помечено xfail: модель могла
+# не отдать это имя. На боевой модели кейсы проходят (xpassed ещё с 02.09.2026),
+# пометка снята 17.09.2026 — иначе потеря этих имён прогоном не ловилась бы
+# (именно так при сравнении моделей 02.09 модель-кандидат теряла их незаметно).
+GLUED_FIRST_NAME_CASES = [
     ("звонюИван Петров по делу", ["Иван"]),
     ("okИгорь Волков на связи", ["Игорь"]),
 ]
@@ -143,11 +144,8 @@ def test_glued_name_not_leaked(text, must_mask):
 
 
 @pytest.mark.requires_model
-@pytest.mark.xfail(strict=False, reason="модель может не найти первое имя, слитое "
-                   "со словом без разделителя; реальные входы с пробелом/запятой — "
-                   "recall 100%. ML-долг, направление редкое.")
-@pytest.mark.parametrize("text,must_mask", GLUED_FIRST_NAME_XFAIL,
-                         ids=[c[0] for c in GLUED_FIRST_NAME_XFAIL])
+@pytest.mark.parametrize("text,must_mask", GLUED_FIRST_NAME_CASES,
+                         ids=[c[0] for c in GLUED_FIRST_NAME_CASES])
 def test_glued_first_name_edge(text, must_mask):
     out = anonymize_text(text)["anonymized"]
     leaked = [v for v in must_mask if v in out]

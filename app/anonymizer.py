@@ -11,6 +11,7 @@ from presidio_anonymizer import AnonymizerEngine, DeanonymizeEngine
 from presidio_anonymizer.entities import OperatorConfig
 
 from app.custom_recognizers import ALL_RU_RECOGNIZERS
+from app.person_filters import filter_person_results
 
 logger = logging.getLogger(__name__)
 
@@ -124,10 +125,14 @@ def analyze_text(text: str, disable_entities=None) -> list:
         language="ru",
     )
     # Убираем LOCATION/исключённые типы, а также отключённые запросом типы
-    return [
+    results = [
         r for r in results
         if r.entity_type not in EXCLUDED_ENTITIES and r.entity_type not in disabled
     ]
+    # Ложные PERSON («гражданине», «г . Москва», «Тульской») — после ОБОИХ источников
+    # имён (модель ruBERT и встроенный spaCy), до разрешения пересечений: тогда
+    # на месте выброшенного ложного имени может остаться, например, адрес.
+    return filter_person_results(text, results)
 
 
 def anonymize_text(text: str, disable_entities=None) -> dict:
