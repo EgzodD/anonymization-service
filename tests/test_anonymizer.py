@@ -274,3 +274,23 @@ def test_name_before_address_both_masked():
     и терялись обе."""
     out = anonymize_text("Срочно! Татьяна Николаева, наб. Центральная 83а кв. 112")["anonymized"]
     assert out == "Срочно! <PERSON>, <ADDRESS>"
+
+
+# Адрес без маркера не должен срабатывать на фамилии перед датой или в нумерованном
+# списке: маска адреса наезжала на ФИО, и имя открывалось (найдено 18.09.2026).
+@pytest.mark.requires_model
+@pytest.mark.parametrize("text,name", [
+    ("Министр Геннадий Воронов 14 июня провёл совещание", "Геннадий"),
+    ("Ответственные лица: 1 ) Самойлов 2 ) Кречетова", "Самойлов"),
+])
+def test_bare_address_does_not_break_names(text, name):
+    out = anonymize_text(text)["anonymized"]
+    assert "<ADDRESS>" not in out and name not in out
+
+
+@pytest.mark.parametrize("text,value", [
+    ("привезите на Вишнёвую улицу, д 3, кв 17", "Вишнёвую улицу"),
+    ("адрес: тула, ленинское шоссе 40, кв 9", "ленинское шоссе 40"),
+])
+def test_address_reverse_forms(text, value):
+    assert value not in anonymize_text(text)["anonymized"]
