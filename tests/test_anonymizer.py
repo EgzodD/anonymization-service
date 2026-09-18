@@ -215,3 +215,15 @@ class TestDatasetCoverage:
 
         recall = found / total if total > 0 else 0
         assert recall >= 0.95, f"Recall={recall:.2f} < 0.95 (found {found}/{total})"
+
+
+# Границы маски ФИО (18.09.2026): точка инициала входит в маску, двойная фамилия —
+# одна маска. Раньше «В.Н» маскировалось без точки, а «Некрасов-Буров» — двумя
+# масками с дефисом между ними.
+@pytest.mark.requires_model
+@pytest.mark.parametrize("text,expected", [
+    ("Прошу связаться с Тетериной В.Н. по заявке", "Прошу связаться с <PERSON> по заявке"),
+    ("Влас Некрасов-Буров, ваша посылка доставлена", "<PERSON>, ваша посылка доставлена"),
+])
+def test_person_mask_boundaries(text, expected):
+    assert anonymize_text(text)["anonymized"] == expected

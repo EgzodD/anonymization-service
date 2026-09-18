@@ -30,11 +30,16 @@ class KeywordAnchoredRecognizer(EntityRecognizer):
     allowed_digit_counts — сколько цифр допустимо в номере (например {10, 12}
     для ИНН, {11} для СНИЛС). Совпадения с другим числом цифр отбрасываются, что
     отсекает мусор при жадном захвате разделителей.
+
+    gate — необязательное условие на весь текст: распознаватель работает, только
+    если в тексте есть это слово («паспорт»). Нужен для номеров, которые без
+    контекста не отличить от других чисел, но в тексте про паспорт однозначны.
     """
 
     def __init__(self, entity, patterns, allowed_digit_counts=None,
-                 score=0.9, name=None):
+                 score=0.9, name=None, gate=None):
         self._rx = [re.compile(p, re.IGNORECASE) for p in patterns]
+        self._gate = re.compile(gate, re.IGNORECASE) if gate else None
         self._allowed = set(allowed_digit_counts or ())
         self._score = score
         self._entity = entity
@@ -49,6 +54,8 @@ class KeywordAnchoredRecognizer(EntityRecognizer):
 
     def analyze(self, text, entities, nlp_artifacts=None):
         if self._entity not in entities:
+            return []
+        if self._gate is not None and not self._gate.search(text):
             return []
         out = []
         for rx in self._rx:
@@ -409,7 +416,9 @@ ru_passport_anchored = KeywordAnchoredRecognizer(
     entity="PASSPORT",
     patterns=[
         # «паспорт [РФ] [серия] <номер>» + склейка + до 2 слов между
-        rf"паспорт[а-яё]*(?:\s*рф)?{_GAP}(?:сери[яию]\W{{0,4}})?№?\s*({_PASS_NUM})",
+        # (?!\d): без неё из 11-значного числа («заказ 78123456789») маскировались
+        # первые 10 цифр, а последняя оставалась в тексте
+        rf"паспорт[а-яё]*(?:\s*рф)?{_GAP}(?:сери[яию]\W{{0,4}})?№?\s*({_PASS_NUM})(?!\d)",
         # «серия 40 12, номер 583 214» / «серия № 4513, номер № 908172» — маска целиком.
         # Серия может быть через дефис или слэш («90-12»), между серией и номером —
         # союз «а» или «и» («серию 45 11 и номер 112233», «серия 12 34, а номер …»).
@@ -424,6 +433,37 @@ ru_passport_anchored = KeywordAnchoredRecognizer(
     allowed_digit_counts={10},
     score=0.85,
     name="RuPassportAnchoredRecognizer",
+)
+
+# Паспорт в тексте, где вообще упомянут паспорт. Якорь выше требует номер сразу
+# после слова и не переходит через «.?!» — утекали: «с моим паспортом? 4609 328145»,
+# «паспорт. данные: 4905-365873», второй номер во фразе «у меня 7105 445566, а у него
+# 7105 665544», номер без серии «потерял паспорт! номер 789012», «серию и номер:
+# 2300515101», разделитель «/» («55 11/778899»). Группировка «4 + 6 цифр» для других номеров не характерна, но без
+# слова «паспорт» в тексте не ловится — чтобы не задеть номера заказов.
+# score 0.6 — ниже ИНН с контрольной суммой: 10-значный ИНН рядом остаётся ИНН.
+_PASS_GROUPED = (r"(?<![\d\-/])(\d{2}\s?\d{2}\s?[\s\-/]\s?\d{6}|\d{2}\s?\d{2}\s?[\s\-/]\s?\d{3}\s\d{3})"
+                 r"(?![\d\-/])")
+ru_passport_in_doc = KeywordAnchoredRecognizer(
+    entity="PASSPORT",
+    patterns=[
+        _PASS_GROUPED,
+        # 10 цифр подряд — только недалеко после «паспорт» / «серия и номер»
+        r"(?:паспорт\w*|сери\w*\s+и\s+номер\w*)[^\n]{0,60}?(?<!\d)(\d{10})(?!\d)",
+    ],
+    allowed_digit_counts={10},
+    score=0.6,
+    name="RuPassportInDocRecognizer",
+    # «удостоверение личности» — так паспорт называют в формальных ответах поддержки
+    gate=r"паспорт|сери\w*\s+и\s+номер|удостоверени\w*\s+личност",
+)
+# Номер паспорта без серии — 6 цифр после слова «номер», рядом со словом «паспорт».
+ru_passport_number_only = KeywordAnchoredRecognizer(
+    entity="PASSPORT",
+    patterns=[r"паспорт\w*[^\n]{0,40}?номер\w*\W{0,4}(\d{3}\s?\d{3})(?![\d\-])"],
+    allowed_digit_counts={6},
+    score=0.6,
+    name="RuPassportNumberOnlyRecognizer",
 )
 
 # Дата рождения по якорю: «дата рождения … 17021992» (в т.ч. без разделителей),
@@ -458,11 +498,21 @@ ru_dob_textual = KeywordAnchoredRecognizer(
 
 # Телефон без +7/8 («861-296-11-12», «(495) 123-45-67») рядом со словом «телефон».
 # Без ключевого слова 10 цифр не отличить от номера заказа, поэтому только якорь.
+# Второй шаблон — более далёкий якорь (до 5 слов, без перехода через конец фразы):
+# «Телефон для связи с отделом 78123456700», «связаться по номеру 74951234509»,
+# «контакт для заявок 74951239999». Городские номера с кодом 7 без «+» иначе утекали:
+# отдельного правила для них нет намеренно — 11 цифр на 7 бывают и номером заказа.
+_GAP_FAR = r"(?:[^\w.!?\n]+\w+){0,5}?[\s:№.\-–—(]{0,6}"
 ru_phone_anchored = KeywordAnchoredRecognizer(
     entity="PHONE_NUMBER",
     patterns=[
         rf"(?:тел|телефон\w*|моб|мобильн\w*|сотов\w*|факс|whatsapp|позвонит\w*|звонит\w*)"
         rf"{_GAP}((?:\(\s*)?\d[\d\s\-()]{{8,18}}\d)",
+        rf"(?:телефон\w*|связ[аиь]\w*|контакт\w*|звон\w*|позвон\w*|whatsapp|ватсап\w*|"
+        rf"вотсап\w*|telegram|телеграм\w*|viber|вайбер\w*)"
+        # (?<![\d+]) — номер не начинается с середины длинного числа: из идентификатора
+        # «88001234567890123» иначе вырезался хвост как телефон
+        rf"{_GAP_FAR}(?<![\d+])((?:\+?[78][\s\-]?)?\(?\s*[3489]\d{{2}}\s*\)?[\s\-]?\d{{3}}[\s\-]?\d{{2}}[\s\-]?\d{{2}})(?!\d)",
     ],
     allowed_digit_counts={10, 11},
     score=0.75,
@@ -568,6 +618,8 @@ ALL_RU_RECOGNIZERS = [
     ru_snils_grouped,
     ru_passport_recognizer,
     ru_passport_anchored,
+    ru_passport_in_doc,
+    ru_passport_number_only,
     ru_email_recognizer,
     ru_obfuscated_email_recognizer,
     ru_date_of_birth_recognizer,

@@ -68,6 +68,11 @@ def _clean_person_span(text: str, start: int, end: int):
         end -= 1
     if end - start < 2:
         return None
+    # Точка после инициала — часть имени: «Тетерина В.Н.» (раньше срезалась, и граница
+    # маски не совпадала с именем; на формате «Фамилия И.О.» строгий F1 был 0).
+    if (end < len(text) and text[end] == "." and text[end - 1].isupper()
+            and (end - 2 < start or not text[end - 2].isalpha())):
+        end += 1
     mid_left = start > 0 and text[start - 1].isalpha()   # буква ПЕРЕД спаном
     mid_right = end < len(text) and text[end].isalpha()  # буква ПОСЛЕ спана
     # (1) Спан обрывается ВНУТРИ слова (после него ещё буквы). Внутренний обрывок
@@ -97,6 +102,24 @@ def _clean_person_span(text: str, start: int, end: int):
     if text[start:end].strip().lower() in _PERSON_STOPWORDS:
         return None
     return start, end
+
+
+def _merge_hyphenated(text, results):
+    """Склеивает спаны, разделённые только дефисом: двойная фамилия «Некрасов-Буров».
+
+    Модель режет такую фамилию на два спана; обе части маскировались, но дефис
+    оставался между двумя масками, а граница не совпадала с именем.
+    """
+    results = sorted(results, key=lambda r: r.start)
+    out = []
+    for r in results:
+        if out and text[out[-1].end:r.start] in ("-", "‐", "–"):
+            prev = out[-1]
+            out[-1] = RecognizerResult(entity_type="PERSON", start=prev.start, end=r.end,
+                                       score=max(prev.score, r.score))
+        else:
+            out.append(r)
+    return out
 
 
 class PersonTransformerRecognizer(EntityRecognizer):
@@ -184,4 +207,4 @@ class PersonTransformerRecognizer(EntityRecognizer):
                         score=score,
                     )
                 )
-        return results
+        return _merge_hyphenated(text, results)
