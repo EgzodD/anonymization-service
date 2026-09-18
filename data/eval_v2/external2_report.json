@@ -1,0 +1,50 @@
+{
+  "hive": {
+    "examples": 1810,
+    "entities_by_type": {
+      "PERSON": 228,
+      "PHONE_NUMBER": 217,
+      "ADDRESS": 176,
+      "EMAIL_ADDRESS": 173,
+      "PASSPORT": 120,
+      "INN": 118,
+      "SNILS": 97,
+      "OTHER_TOKEN": 95,
+      "OTHER_KPP": 94,
+      "OTHER_OGRN": 93,
+      "CREDIT_CARD": 92,
+      "OTHER_OGRNIP": 87,
+      "OTHER_CVC": 77
+    },
+    "sha256": "c056ee874f29e3b94d85f3395465971b634140ecc50af47992248e110225b478",
+    "with_person": 228,
+    "clean": 378
+  },
+  "alro": {
+    "examples": 4500,
+    "dropped_not_found": 0,
+    "entities_by_type": {
+      "PERSON": 2941,
+      "ADDRESS": 2660
+    },
+    "sha256": "4fd062dd20d470280f87951146a72d3b98b7498518abc3817279caed509329a3",
+    "with_person": 2522,
+    "clean": 1026
+  },
+  "mcr": {
+    "source_size": 217501,
+    "examples": 4000,
+    "seed": 20260918,
+    "entities_by_type": {
+      "OTHER_LOC": 1067,
+      "PERSON": 829,
+      "OTHER_CW": 710,
+      "OTHER_GRP": 691,
+      "OTHER_PROD": 681,
+      "OTHER_CORP": 648
+    },
+    "sha256": "23f0bd2b836adebaac2adccdce9d81b3a6d48a4a0b9e94ab0247d244f4193239",
+    "with_person": 792,
+    "clean": 0
+  }
+}

@@ -43,6 +43,10 @@ DATASETS = {
     # третий внешний набор, персоны из factRuEval-2016, см. load_ext.py и поправку 2.
     # Только для финальной приёмки — до этапа 4 ни одна система на нём не запускается.
     "ext": os.path.join(HERE, "ext.jsonl"),
+    # три внешних набора, замер после приёмки v3 — поправка 4, load_external2.py
+    "hive": os.path.join(HERE, "hive.jsonl"),
+    "alro": os.path.join(HERE, "alro.jsonl"),
+    "mcr": os.path.join(HERE, "mcr.jsonl"),
     # dev-наборы — ТОЛЬКО для настройки (правило П1 плана улучшений)
     "dev_v2": os.path.join(HERE, "dev_v2.jsonl"),
     "dev_rmr": os.path.join(HERE, "dev_rmr.jsonl"),
@@ -59,6 +63,8 @@ SYSTEMS = {
     "S4simple": "то же, что S4, но склейка подслов simple",
     # сторонняя доменная модель для русских ПДн (redmadrobot, MIT)
     "S6": "rubert-base-pii-ner — сторонняя модель, обучена на русских ПДн",
+    # модель конкурента (PIIDetector, гибрид на Presidio), MIT; обучена на данных alro
+    "S7": "alrosait/spacy_ru_core_news_lg_pii — spaCy NER для NAME/ADDRESS",
 }
 BENCH_MODEL = "redmadrobot-rnd/rubert-base-pii-ner"
 PERSON_PART_LABELS = ("FIRST_NAME", "LAST_NAME", "MIDDLE_NAME", "PER", "PERSON")
@@ -146,6 +152,12 @@ def make_system(code):
                 if group.rsplit("-", 1)[-1].upper() in PERSON_PART_LABELS:
                     out.append((int(ent["start"]), int(ent["end"])))
             return merge_adjacent(text, out)
+    elif code == "S7":
+        import spacy
+        from huggingface_hub import snapshot_download
+        nlp = spacy.load(snapshot_download("alrosait/spacy_ru_core_news_lg_pii"))
+        def run(text):
+            return [(e.start_char, e.end_char) for e in nlp(text).ents if e.label_ == "NAME"]
     elif code == "S5":
         os.environ["PERSON_MODEL_DIR"] = MODEL_OVERRIDE["dir"] or PROD_MODEL
         from app.anonymizer import anonymize_text
