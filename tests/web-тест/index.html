@@ -33,6 +33,12 @@
   input[type=text] { border:1px solid var(--line); border-radius:8px; padding:9px 10px; font-size:13px; font-family:inherit; }
   label.chk { font-size:13px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; user-select:none; }
   .ok { color:#1c6b2a; font-weight:600; } .bad { color:#b0202a; font-weight:600; }
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+  @media (max-width:700px){ .cols { grid-template-columns:1fr; } }
+  .col { border:1px solid var(--line); border-radius:8px; padding:10px; }
+  .col h3 { font-size:13px; margin:0 0 6px; color:var(--muted); font-weight:600; }
+  .presets button { background:#eef1f6; color:#2e5496; padding:6px 10px; font-size:12px; }
+  .k-good{color:#1c6b2a;font-weight:600} .k-bad{color:#b0202a;font-weight:600} .k-mid{color:#8a6d00;font-weight:600}
 </style>
 </head>
 <body>
@@ -61,6 +67,27 @@
       <div class="out" id="out" style="margin:8px 0 14px"></div>
       <div id="cpDiag" class="muted" style="line-height:1.8;margin-bottom:12px"></div>
       <table id="ents"><thead><tr><th>Тип</th><th>Значение</th><th>Score</th></tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>3. Было / стало — что изменилось после плана улучшений</h2>
+    <div class="muted">Один и тот же текст обрабатывают две версии: <b>было</b> — сервис до плана улучшений
+      (<span id="oldRef">…</span>, прежняя модель ФИО) и <b>стало</b> — текущий код с моделью v3.
+      Состояние старой версии: <b id="oldState">проверяю…</b></div>
+    <div class="row presets" id="presets"></div>
+    <textarea id="cmpInp" style="min-height:90px;margin-top:10px" placeholder="Текст для сравнения или выберите пример выше"></textarea>
+    <div class="row"><button id="cmpGo">Сравнить</button><span class="muted" id="cmpHint"></span></div>
+    <div id="cmpErr" class="err"></div>
+    <div id="cmpRes" style="display:none">
+      <div class="cols">
+        <div class="col"><h3>БЫЛО <span id="msOld"></span></h3><div class="out" id="outOld"></div></div>
+        <div class="col"><h3>СТАЛО <span id="msNew"></span></h3><div class="out" id="outNew"></div></div>
+      </div>
+      <div class="muted" style="margin-top:12px">Отличия. «Маска снята» — это либо исправленное ложное срабатывание
+        (слово не было ПДн), либо новая утечка; «добавлена маска» — либо закрытая утечка, либо новое лишнее
+        срабатывание. Решает значение в таблице.</div>
+      <table id="cmpDiff"><thead><tr><th>Что</th><th>Было</th><th>Стало</th></tr></thead><tbody></tbody></table>
     </div>
   </div>
 
@@ -159,6 +186,54 @@ function cpSelected(){
 $('cpClear').onclick = () => {
   $('cpBoxes').querySelectorAll('input').forEach(i=>{i.checked=false;});
   $('cpFree').value=''; $('cpDiag').innerHTML='';
+};
+
+// ── блок 3: было / стало ────────────────────────────────────────────────────
+// Примеры собственные (не из наборов оценки), по одному на каждое улучшение.
+const PRESETS = [
+  ["Адрес без «ул.»", "Привезите на Рябиновая 47, кв 12, звоните в домофон"],
+  ["Адрес строчными", "адрес доставки: курск, садовая 14, кв 88"],
+  ["Адрес «пр.», «8-е Марта»", "Живу на пр. Строителей 91, а мама — наб. 8-е Марта 5 кв. 3"],
+  ["Паспорт после «?»", "Что с моим паспортом? 4512 734891 не проходит проверку"],
+  ["Два паспорта", "Паспорта у обоих: у меня 4602 118834, у жены 4602 553190"],
+  ["Телефон далеко от слова", "Телефон для связи с нашей бухгалтерией 74957301122"],
+  ["Инициалы и двойная фамилия", "Акт подписали Тетерина В.Н. и Влас Некрасов-Буров"],
+  ["Ложные ФИО: слова", "Пахнет запахом мокрого дерева, Таганский район затопило"],
+  ["Ложные ФИО: заглавные", "Спасибо Заранее, Жду Ответа"],
+  ["Двойная фамилия", "звоню по поводу заказа, я Анна Кузнецова-Ветрова"],
+  ["Имя + адрес подряд", "Срочно! Татьяна Николаева, наб. Центральная 83а кв. 112"],
+  ["Обычный текст", "Номер заказа 1234 567890 не приходит, трек 12345678901, оплатил 500 руб"],
+  ["Остаток: роль как имя", "Уважаемый Клиент, Ваш Заказ передан Курьеру"],
+];
+$('presets').innerHTML = PRESETS.map((p,i)=>`<button data-i="${i}">${esc(p[0])}</button>`).join('');
+$('presets').onclick = e => { const i=e.target.dataset.i; if(i!==undefined){ $('cmpInp').value=PRESETS[i][1]; $('cmpGo').click(); } };
+async function pollOld(){
+  try{ const d=await (await fetch('/compare/status')).json();
+    $('oldRef').textContent='коммит '+d.old_ref+', модель '+d.old_model;
+    $('oldState').textContent=d.state+(d.error?(' — '+d.error):'');
+    $('oldState').className = d.state==='готова' ? 'ok' : (d.state==='ошибка' ? 'bad' : '');
+    if(d.state!=='готова' && d.state!=='ошибка') setTimeout(pollOld, 2000);
+  }catch(_){ setTimeout(pollOld, 3000); }
+}
+pollOld();
+const KIND = {"добавлена маска":"k-good","маска снята":"k-bad","граница изменена":"k-mid","тип изменён":"k-mid"};
+const ent = e => e ? `<span class="ph t-${typeClass(e.type)}">${esc(e.type)}</span> ${esc(e.value)}` : '<span class="muted">—</span>';
+$('cmpGo').onclick = async () => {
+  $('cmpErr').textContent=''; $('cmpGo').disabled=true;
+  try{
+    const r=await fetch('/compare',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:$('cmpInp').value})});
+    if(!r.ok){ let t=''; try{t=(await r.json()).detail||'';}catch(_){} throw new Error('HTTP '+r.status+(t?' — '+t:'')); }
+    const d=await r.json();
+    $('outOld').innerHTML=highlight(esc(d.old.anonymized).replace(/&lt;([A-Z_]+?(?:_\d+)?)&gt;/g,'<$1>'));
+    $('outNew').innerHTML=highlight(esc(d.new.anonymized).replace(/&lt;([A-Z_]+?(?:_\d+)?)&gt;/g,'<$1>'));
+    $('msOld').textContent=`· ${d.old.ms} мс (с HTTP)`; $('msNew').textContent=`· ${d.new.ms} мс`;
+    const tb=$('cmpDiff').querySelector('tbody'); tb.innerHTML='';
+    if(!d.diff.length) tb.innerHTML='<tr><td colspan="3" class="muted">Результат не изменился</td></tr>';
+    d.diff.forEach(x=>{ const tr=document.createElement('tr');
+      tr.innerHTML=`<td class="${KIND[x.kind]||''}">${esc(x.kind)}</td><td>${ent(x.old)}</td><td>${ent(x.new)}</td>`; tb.appendChild(tr); });
+    $('cmpRes').style.display='';
+  }catch(e){ $('cmpErr').textContent='Ошибка: '+e.message; }
+  finally{ $('cmpGo').disabled=false; }
 };
 </script>
 </body>
