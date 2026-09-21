@@ -1,0 +1,18 @@
+{
+  "model": "qwen3:8b",
+  "texts": 50,
+  "rejected": 0,
+  "reject_share": 0.0,
+  "reasons": {
+    "unknown_tag": 0,
+    "leftover": 0,
+    "duplicate": 0,
+    "no_tags": 0,
+    "extra_pii": 0
+  },
+  "requests": 10,
+  "tokens": 3297,
+  "minutes": 12.1,
+  "tokens_per_sec": 4.6,
+  "sec_per_text": 14.5
+}
