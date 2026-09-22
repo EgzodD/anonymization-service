@@ -1,15 +1,16 @@
 """
-Отчёт Word о тестировании на общедоступных наборах с цветовой разметкой сравнений.
+Отчёт Word о тестировании на общедоступных наборах: наш сервис (последний прогон)
+против конкурентов.
 
-Цвет ячейки — вердикт сравнения нашего сервиса с другой системой:
-  зелёный — выигрываем значимо (95 % ДИ разности целиком в нашу пользу);
-  жёлтый  — на уровне (ДИ разности содержит ноль; для величин без ДИ — см. правило в отчёте);
-  красный — проигрываем значимо;
-  серый   — сравнение некорректно (система обучена на этом наборе, мы настраивались на нём,
-            или разметка набора не позволяет судить о метрике) — показано, но не засчитано.
+Цветом выделены только НАШИ результаты; значения конкурентов — простым текстом.
+Цвет нашей ячейки — вердикт сравнения с конкурентом по 95 % доверительному интервалу
+разности (парный бутстрап):
+  зелёный — выигрываем, жёлтый — на уровне, красный — проигрываем,
+  серый   — сравнение некорректно, в счёт не идёт.
+Выводы собираются из тех же вердиктов, что и цвета.
 
-Источники: results/competitors_paired.json (compare_competitors.py),
-results/acceptance_stage3.json, results/preds_S5-v3_hive.jsonl и preds_S5-r7_hive.jsonl.
+Источники: results/competitors_paired.json (compare_competitors.py), hive.jsonl и
+results/preds_S5-r7_hive.jsonl (утечки по типам).
 
 Запуск:
     .venv/bin/python data/eval_v2/report_competitors_docx.py --out <путь к .docx>
@@ -17,27 +18,46 @@ results/acceptance_stage3.json, results/preds_S5-v3_hive.jsonl и preds_S5-r7_hi
 import argparse
 import json
 import os
-from collections import Counter
+from collections import Counter, defaultdict
 
 from docx import Document
+from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from docx.shared import Pt
+from docx.shared import Cm, Pt, RGBColor
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 RES = os.path.join(HERE, "results")
+OURS = "S5-r7"
 COLOR = {"win": "C6EFCE", "tie": "FFEB9C", "loss": "FFC7CE", "na": "E7E6E6"}
-WORD = {"win": "выигрываем", "tie": "на уровне", "loss": "проигрываем", "na": "не засчитано"}
-METRIC_RU = {"precision": "Точность", "recall": "Полнота", "f1": "Строгий F1",
-             "f1_overlap": "F1 по пересечению", "full_masked": "Имён скрыто полностью",
+HEAD, GROUP = "1F4E79", "DDEBF7"
+WORD = {"win": "ВЫИГРЫВАЕМ", "tie": "НА УРОВНЕ", "loss": "ПРОИГРЫВАЕМ", "na": "не засчитано"}
+METRICS = ["full_masked", "f1", "precision", "recall", "f1_overlap", "false_person_rate"]
+METRIC_RU = {"full_masked": "Имён скрыто полностью", "f1": "Строгий F1", "precision": "Точность",
+             "recall": "Полнота", "f1_overlap": "F1 по пересечению",
              "false_person_rate": "Ложное ФИО в текстах без ФИО"}
 PCT = {"full_masked", "false_person_rate"}
-SYS_RU = {"S6": "redmadrobot rubert-base-pii-ner", "S7": "PIIDetector (alrosait, spaCy)",
-          "S5-prev": "наш сервис, прежняя модель", "S5-v3": "наш сервис, модель v3",
-          "S5-r7": "наш сервис сейчас (v3 + правила 18.09)"}
+COMP = {"S6": "redmadrobot", "S7": "PIIDetector"}
+COMP_FULL = {"S6": "redmadrobot rubert-base-pii-ner", "S7": "PIIDetector (alrosait, spaCy + Presidio)"}
+
+# набор: (название, пояснение к строке-заголовку группы, какие ячейки не засчитываются)
+DATASETS = [
+    ("hive", "hivetrace/pii-bench", "сообщения поддержки, разметка двух экспертов; наш замер не слепой — "
+     "классы ошибок разбирались 18.09", lambda o, m: False),
+    ("ext", "factRuEval-2016", "новости, ручная разметка «Диалог-2016»; независимый для всех систем",
+     lambda o, m: False),
+    ("v2", "test_v2", "синтетические обращения — наш домен; для конкурентов чужой", lambda o, m: False),
+    ("bench", "pii_benchmark", "набор компании redmadrobot; и redmadrobot, и наша модель обучались на данных "
+     "того же источника (pii_train)", lambda o, m: False),
+    ("mcr", "MultiCoNER", "строчный текст; разметка неполная — точность, F1 и ложные ФИО не засчитаны",
+     lambda o, m: m in ("precision", "f1", "f1_overlap", "false_person_rate")),
+    ("alro", "alrosait/pii-synthetic-ru", "правила подбирались на этом наборе, PIIDetector на нём обучен — "
+     "не засчитано целиком", lambda o, m: True),
+]
 
 
+# ── форматирование ─────────────────────────────────────────────────────────
 def shade(cell, hex_color):
     tc = cell._tc.get_or_add_tcPr()
     shd = OxmlElement("w:shd")
@@ -47,18 +67,16 @@ def shade(cell, hex_color):
     tc.append(shd)
 
 
-def fmt(m, v):
-    return f"{v * 100:.1f} %".replace(".", ",") if m in PCT else f"{v:.3f}".replace(".", ",")
+def num(m, v):
+    return (f"{v * 100:.1f} %" if m in PCT else f"{v:.3f}").replace(".", ",")
 
 
-def fmt_diff(m, d):
-    s = f"{d * 100:+.1f} п.п." if m in PCT else f"{d:+.3f}"
-    return s.replace(".", ",")
-
-
-def fmt_ci(m, ci):
-    k = 100 if m in PCT else 1
-    return f"[{ci[0] * k:+.{1 if m in PCT else 3}f}; {ci[1] * k:+.{1 if m in PCT else 3}f}]".replace(".", ",")
+def diff(m, d, ci):
+    if m in PCT:
+        s = f"{d * 100:+.1f} п.п.  [{ci[0] * 100:+.1f}; {ci[1] * 100:+.1f}]"
+    else:
+        s = f"{d:+.3f}  [{ci[0]:+.3f}; {ci[1]:+.3f}]"
+    return s.replace(".", ",").replace("п,п,", "п.п.")
 
 
 class Report:
@@ -67,7 +85,8 @@ class Report:
         st = self.doc.styles["Normal"]
         st.font.name = "Times New Roman"
         st.font.size = Pt(11)
-        self.score = Counter()
+        sec = self.doc.sections[0]
+        sec.left_margin = sec.right_margin = Cm(1.8)
 
     def h(self, text, level=1):
         self.doc.add_heading(text, level=level)
@@ -84,55 +103,49 @@ class Report:
         for it in items:
             self.doc.add_paragraph(it, style="List Bullet")
 
-    def table(self, header, rows, note=None):
-        """rows: список строк; ячейка — str или (str, вердикт)."""
+    def table(self, header, rows, widths=None, note=None, font=10):
+        """rows: список строк. Ячейка — str, (str, вердикт) — окрашенная, или ("GROUP", текст) —
+        строка-заголовок группы на всю ширину."""
         t = self.doc.add_table(rows=1, cols=len(header))
         t.style = "Table Grid"
+        t.alignment = WD_TABLE_ALIGNMENT.CENTER
         for i, x in enumerate(header):
             c = t.rows[0].cells[i]
-            c.text = x
-            c.paragraphs[0].runs[0].bold = True
-            shade(c, "D9E1F2")
+            c.text = ""
+            r = c.paragraphs[0].add_run(x)
+            r.bold = True
+            r.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+            shade(c, HEAD)
         for row in rows:
             cells = t.add_row().cells
+            if isinstance(row, tuple) and row[0] == "GROUP":
+                merged = cells[0].merge(cells[-1])
+                merged.text = ""
+                run = merged.paragraphs[0].add_run(row[1])
+                run.bold = True
+                if len(row) > 2:
+                    r2 = merged.paragraphs[0].add_run("  —  " + row[2])
+                    r2.italic = True
+                shade(merged, GROUP)
+                continue
             for i, x in enumerate(row):
                 if isinstance(x, tuple):
-                    cells[i].text = x[0]
+                    cells[i].text = ""
+                    run = cells[i].paragraphs[0].add_run(x[0])
+                    run.bold = True
                     shade(cells[i], COLOR[x[1]])
                 else:
                     cells[i].text = x
         for row in t.rows:
-            for c in row.cells:
+            for i, c in enumerate(row.cells):
+                if widths and i < len(widths):
+                    c.width = Cm(widths[i])
                 for par in c.paragraphs:
                     for r in par.runs:
-                        r.font.size = Pt(9)
+                        r.font.size = Pt(font)
         if note:
             self.p(note, italic=True, size=9)
         self.doc.add_paragraph()
-
-
-def competitor_table(rep, R, ds, ours, others, na_rules, count=True, note=None):
-    """Значения конкурентов — простым текстом; окрашены только наши ячейки.
-
-    Против каждого конкурента — своя наша ячейка: наше значение, разница с ним и
-    её интервал; цвет — вердикт этого сравнения.
-    """
-    d = R[ds]
-    short = {"S6": "redmadrobot", "S7": "PIIDetector"}
-    header = ["Метрика"] + [SYS_RU[o] for o in others] + [f"МЫ против {short[o]}" for o in others]
-    rows = []
-    for m in ["f1", "precision", "recall", "f1_overlap", "full_masked", "false_person_rate"]:
-        row = [METRIC_RU[m]] + [fmt(m, d["systems"][o][m]) for o in others]
-        for o in others:
-            res = d["pairs"][f"{ours}|{o}"][m]
-            verdict = "na" if na_rules(o, m) else res["verdict"]
-            text = (f"{fmt(m, d['systems'][ours][m])}\nразница {fmt_diff(m, res['diff'])}\n"
-                    f"ДИ {fmt_ci(m, res['ci95'])}\n{WORD[verdict]}")
-            row.append((text, verdict))
-            if count and verdict != "na":
-                rep.score[(o, verdict)] += 1
-        rows.append(row)
-    rep.table(header, rows, note)
 
 
 def main():
@@ -140,291 +153,230 @@ def main():
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     R = json.load(open(os.path.join(RES, "competitors_paired.json"), encoding="utf-8"))
-    ACC = json.load(open(os.path.join(RES, "acceptance_stage3.json"), encoding="utf-8"))
     rep = Report()
 
-    t = rep.doc.add_heading("Тестирование модуля обезличивания на общедоступных наборах: "
-                            "сравнение с конкурентами", 0)
-    t.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    rep.p("Дата: 22.09.2026. Предмет: распознавание ФИО и утечки ПДн. Наш сервис — модель ФИО v3 "
-          "(rubert-tiny2) + правила + фильтр ложных ФИО. Все цифры получены по протоколу "
-          "data/eval_v2/PROTOCOL.md (поправки 2–5), скрипты и предсказания — в data/eval_v2/.", italic=True)
+    # вердикты — один раз, из них и цвета, и выводы
+    verdicts = {}                         # (ds, comp, metric) -> вердикт с учётом «не засчитано»
+    for ds, _, _, na in DATASETS:
+        for o in COMP:
+            for m in METRICS:
+                v = R[ds]["pairs"][f"{OURS}|{o}"][m]["verdict"]
+                verdicts[(ds, o, m)] = "na" if na(o, m) else v
 
-    # ── 0. Что это за тестирование
-    rep.h("Что это за тестирование и зачем оно нужно")
-    rep.h("Зачем", 2)
+    title = rep.doc.add_heading("Тестирование модуля обезличивания на общедоступных наборах", 0)
+    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    rep.p("Сравнение с конкурентами. Последний прогон: 22.09.2026, текущая версия сервиса — модель ФИО v3 "
+          "(rubert-tiny2) + правила для номеров и адресов + фильтр ложных ФИО.", italic=True)
+
+    # ── Что это и зачем
+    rep.h("1. Что это за тестирование и зачем оно нужно")
     rep.p("Модуль обезличивания убирает персональные данные (ФИО, телефоны, паспорта, адреса и т. д.) из текста "
           "перед тем, как текст уйдёт во внешний сервис или языковую модель. Ошибиться можно двумя способами:")
     rep.bullets([
         "пропустить ПДн — это утечка и нарушение 152-ФЗ; главный риск;",
-        "замаскировать лишнее (например, слово «Страховой» как фамилию) — утечки нет, но текст портится "
-        "и хуже обрабатывается дальше.",
+        "замаскировать лишнее (например, слово «Страховой» как фамилию) — утечки нет, но текст портится.",
     ])
-    rep.p("Проверять модуль только на своих тестах нельзя: свои тесты делает тот же человек, что и модуль, и они "
-          "завышают результат. Мы это измерили сами: в прежнем внутреннем тесте 97 % примеров были построены по "
-          "тем же шаблонам, что и обучение, и оценка была завышена на 0,26 по F1. Поэтому модуль проверяется на "
-          "общедоступных наборах, которые размечали другие люди, и на тех же текстах сравнивается с другими системами.")
-    rep.h("Что проверяется", 2)
-    rep.bullets([
-        "Главное — распознавание ФИО: это единственное, что делает нейросетевая модель; остальные типы ищут правила.",
-        "Дополнительно — утечки остальных ПДн (телефон, почта, ИНН, СНИЛС, паспорт, карта, адрес) там, где они размечены.",
-    ])
+    rep.p("Проверять модуль только на своих тестах нельзя: их делает тот же человек, что и модуль, и они завышают "
+          "результат. Мы это измерили: в прежнем внутреннем тесте 97 % примеров были построены по тем же шаблонам, "
+          "что и обучение, и оценка была завышена на 0,26 по F1. Поэтому модуль проверяется на общедоступных "
+          "наборах, которые размечали другие люди, и на тех же текстах сравнивается с другими системами.")
+    rep.p("Что проверяется. Главное — распознавание ФИО: это единственное, что делает нейросетевая модель; "
+          "остальные типы ПДн ищут правила. Утечки остальных ПДн — в разделе 6.")
+
     rep.h("Метрики простыми словами", 2)
-    rep.table(["Метрика", "Что значит", "Что лучше"], [
-        ["Имён скрыто полностью", "доля имён, у которых замаскировано каждое слово — имя не осталось в тексте даже частично. "
-                                  "Главная метрика приватности", "больше"],
-        ["Точность", "из всех масок «ФИО» — сколько действительно имена, причём с точными границами", "больше"],
+    rep.table(["Метрика", "Что значит", "Лучше"], [
+        ["Имён скрыто полностью", "доля имён, у которых замаскировано каждое слово. Главная метрика приватности: "
+                                  "имя не осталось в тексте даже частично", "больше"],
+        ["Строгий F1", "стандартная сводная оценка точности и полноты; маска засчитывается, только если её "
+                       "границы в точности совпадают с именем", "больше"],
+        ["Точность", "из всех масок «ФИО» — сколько действительно имена (с точными границами)", "больше"],
         ["Полнота", "из всех имён — сколько найдено с точными границами", "больше"],
-        ["Строгий F1", "среднее точности и полноты; стандартная метрика для сравнения систем", "больше"],
-        ["F1 по пересечению", "то же, но засчитывается и маска с неточными границами", "больше"],
+        ["F1 по пересечению", "как строгий F1, но засчитывается и маска с неточными границами", "больше"],
         ["Ложное ФИО в текстах без ФИО", "доля текстов без имён, где система всё же поставила маску имени", "меньше"],
-        ["Утечки ПДн", "доля значений ПДн, оставшихся в тексте после обезличивания", "меньше"],
-    ])
-    rep.h("На каких наборах", 2)
-    rep.table(["Набор", "Что это", "Кто размечал", "Зачем он в проверке"], [
-        ["hivetrace/pii-bench", "1 810 сообщений поддержки и мессенджеров (банк, телеком, доставка, HR…)",
-         "два эксперта независимо, согласие 0,87", "самый близкий к нашей задаче; к нему опубликована статья "
-                                                    "с результатами других систем"],
-        ["alrosait/pii-synthetic-ru", "4 500 сообщений поддержки, ФИО и адреса", "сгенерировано языковой моделью",
-         "много имён в разных формах и падежах, трудные негативы"],
-        ["MultiCoNER (русская часть)", "4 000 фраз из Википедии, весь текст строчными",
-         "сторонние авторы, разметка неполная", "проверка на тексте без заглавных букв"],
-        ["test_v2", "480 синтетических обращений", "мы, по протоколу, до обучения модели",
-         "приёмка модели на нашем домене"],
-        ["pii_benchmark (redmadrobot)", "2 841 сообщение, часть из реальных логов", "redmadrobot",
-         "приёмка на чужом домене"],
-        ["factRuEval-2016", "995 абзацев новостей", "соревнование «Диалог-2016»", "приёмка на новостях"],
-    ])
-    rep.h("Кто конкуренты", 2)
+    ], widths=[4.5, 11, 1.8])
+
+    rep.h("Наборы", 2)
+    rep.table(["Набор", "Что это", "Кто размечал"], [
+        ["hivetrace/pii-bench", "1 810 сообщений поддержки и мессенджеров: банк, телеком, доставка, HR…",
+         "два эксперта независимо, согласие 0,87; к набору опубликована статья с результатами других систем"],
+        ["factRuEval-2016", "995 абзацев новостей", "соревнование «Диалог-2016», вручную"],
+        ["test_v2", "480 синтетических обращений клиентов", "мы, по протоколу, до обучения модели"],
+        ["pii_benchmark", "2 841 сообщение, часть из реальных логов", "компания redmadrobot"],
+        ["MultiCoNER (русская часть)", "4 000 фраз из Википедии, весь текст строчными", "сторонние авторы; разметка неполная"],
+        ["alrosait/pii-synthetic-ru", "4 500 сообщений поддержки, ФИО и адреса", "сгенерировано языковой моделью"],
+    ], widths=[4, 7, 6.3])
+
+    rep.h("Конкуренты", 2)
     rep.table(["Система", "Что это", "Чем интересна"], [
-        [SYS_RU["S6"], "открытая модель Red Madrobot (MIT) для поиска ПДн в русском тексте, rubert-base",
-         "самая точная из найденных открытых моделей, но крупная и медленная"],
-        [SYS_RU["S7"], "открытый проект PIIDetector: spaCy + Presidio, та же архитектура, что у нас (модель + правила)",
-         "прямой аналог по устройству; обучен на наборе alrosait"],
+        [COMP_FULL["S6"], "открытая модель компании Red Madrobot для поиска ПДн в русском тексте (MIT), rubert-base",
+         "самая точная из найденных открытых моделей; крупная и медленная"],
+        [COMP_FULL["S7"], "открытый проект PIIDetector: spaCy + Presidio, то же устройство, что у нас "
+                          "(модель + правила)", "прямой аналог; обучен на наборе alrosait"],
         ["GLiNER Guard, GLiNER2", "модели компании HiveTrace из статьи к набору hivetrace (arXiv 2605.05277)",
-         "мы их не запускали — берём опубликованные числа"],
-        [SYS_RU["S5-prev"], "наш сервис до переобучения модели", "показывает, что дала новая модель"],
-    ])
+         "мы их не запускали — сравниваем с опубликованными числами"],
+    ], widths=[4.5, 7.5, 5.3])
+
     rep.h("Кто на чём проверялся", 2)
-    yes, pub, no = "запускали мы", "опубликовано авторами", "—"
-    rep.table(["Система", "hivetrace", "alrosait", "MultiCoNER", "test_v2", "pii_benchmark", "factRuEval"], [
-        ["Наш сервис", yes, yes, yes, yes, yes, yes],
-        [SYS_RU["S6"], yes, yes, yes, yes, yes, no],
-        [SYS_RU["S7"], yes, yes, yes, no, no, no],
-        ["GLiNER Guard / GLiNER2", pub + " (domain-часть)", no, no, no, no, no],
-        [SYS_RU["S5-prev"], yes, yes, yes, yes, yes, yes],
-    ], "Все системы, помеченные «запускали мы», прогонялись одной и той же программой на одних и тех же текстах "
-       "и считались одними и теми же формулами. Проверка программы: для PIIDetector она дала NAME F1 = 0,944 "
-       "на hivetrace — ровно число, опубликованное его авторами.")
-    rep.h("Как проводилось", 2)
-    rep.bullets([
-        "Критерии и перечень систем записывались в протокол и фиксировались в git до первого прогона.",
-        "Каждый набор для слепого замера использовался один раз; ни один не использовался для обучения.",
-        "Разница с конкурентом считается с 95 % доверительным интервалом (парный бутстрап): случайное различие "
-        "не выдаётся за выигрыш или проигрыш.",
-    ])
+    y, pub, no = "запускали мы", "числа из статьи", "—"
+    rep.table(["Система", "hivetrace", "factRuEval", "test_v2", "pii_benchmark", "MultiCoNER", "alrosait"], [
+        ["Наш сервис", y, y, y, y, y, y],
+        [COMP["S6"], y, y, y, y, y, y],
+        [COMP["S7"], y, y, y, y, y, y],
+        ["GLiNER Guard / GLiNER2", pub, no, no, no, no, no],
+    ], widths=[3.8, 2.3, 2.3, 2.1, 2.5, 2.3, 2.1],
+        note="Все системы с пометкой «запускали мы» прогонялись одной программой на одних и тех же текстах и "
+             "считались одними формулами. Проверка программы: для PIIDetector она дала NAME F1 = 0,944 на "
+             "hivetrace — ровно число, которое публикуют его авторы.")
 
-    # ── 1. Правило цвета
-    rep.h("1. Как читать цвета")
-    rep.p("Цветом выделены только НАШИ результаты. Значения конкурентов даны простым текстом. Против каждого "
-          "конкурента — своя наша ячейка: цвет показывает, выиграли мы у него, на уровне или проиграли.", bold=True)
-    rep.table(["Цвет", "Значение", "Правило"], [
-        [("зелёный", "win"), "выигрываем", "95 % доверительный интервал разности «мы минус конкурент» "
-                                           "целиком в нашу пользу (парный бутстрап, 2000 итераций)"],
-        [("жёлтый", "tie"), "на уровне", "интервал разности содержит ноль — различие не доказано; "
-                                         "для величин без интервала — правило в разделе таблицы"],
-        [("красный", "loss"), "проигрываем", "интервал разности целиком не в нашу пользу"],
-        [("серый", "na"), "не засчитано", "сравнение некорректно: конкурент обучен на этом наборе, "
-                                          "мы настраивались на нём или разметка не позволяет судить"],
-    ], "Для «ложное ФИО» лучше меньшее значение, для остальных метрик — большее. В нашей ячейке: наше значение, "
-       "разница «мы минус конкурент» и её интервал.")
+    # ── Как читать
+    rep.h("2. Как читать таблицы")
+    rep.p("Цветом выделены только НАШИ результаты. Значения конкурентов — простым текстом.", bold=True)
+    rep.table(["Цвет нашей ячейки", "Что значит", "Правило"], [
+        [("ВЫИГРЫВАЕМ", "win"), "мы лучше конкурента", "вся 95 % зона возможной разницы — в нашу пользу"],
+        [("НА УРОВНЕ", "tie"), "разница не доказана", "зона возможной разницы включает ноль"],
+        [("ПРОИГРЫВАЕМ", "loss"), "конкурент лучше", "вся зона возможной разницы — не в нашу пользу"],
+        [("не засчитано", "na"), "сравнивать нечестно", "конкурент обучен на этом наборе, мы на нём "
+                                                        "настраивались или разметка не позволяет судить"],
+    ], widths=[3.5, 4, 9.8])
+    ex = R["hive"]["pairs"][f"{OURS}|S6"]["f1"]
+    rep.p("Каждая строка таблицы сравнения читается слева направо: метрика → результат конкурента → НАШ результат "
+          "→ насколько мы лучше (+) или хуже (−) и в скобках границы этой разницы → итог. Пример из hivetrace, строгий "
+          f"F1: «{num('f1', R['hive']['systems']['S6']['f1'])} → {num('f1', R['hive']['systems'][OURS]['f1'])} → "
+          f"{diff('f1', ex['diff'], ex['ci95'])} → ПРОИГРЫВАЕМ»: мы хуже redmadrobot на {num('f1', abs(ex['diff']))}, "
+          f"и даже в лучшем для нас случае хуже на {num('f1', abs(ex['ci95'][1]))}. "
+          "Для «ложное ФИО» знак минус — это хорошо: у нас меньше ложных масок.")
 
-    # ── 2. Наборы и системы
-    rep.h("2. Наборы и системы")
-    rep.table(["Набор", "Что внутри", "Разметка", "Лицензия", "Статус для нас"], [
-        ["hivetrace/pii-bench", "1 810 текстов поддержки и мессенджеров, 228 имён", "два эксперта, согласие 0,87",
-         "Apache-2.0", "слепой замер после приёмки; после правил 18.09 — не слепой"],
-        ["alrosait/pii-synthetic-ru", "4 500 текстов, 2 941 имя, адреса", "сгенерировано LLM",
-         "MIT", "слепой замер после приёмки; затем — dev для правил"],
-        ["MultiCoNER ru", "4 000 фраз из Википедии, строчные, 829 имён", "сторонняя, неполная",
-         "CC BY 4.0", "слепой замер после приёмки"],
-        ["test_v2 / pii_benchmark / factRuEval", "обращения / логи / новости", "наша / redmadrobot / «Диалог»",
-         "— / MIT / MIT", "приёмка модели v3 по предрегистрации"],
-    ])
-    rep.table(["Система", "Что это", "Скорость"], [
-        [SYS_RU["S5-v3"], "rubert-tiny2 + правила + морфологический фильтр", "сервис 9–16 мс, модель 3,5 мс"],
-        [SYS_RU["S6"], "rubert-base, обучена на русских ПДн (MIT)", "36–56 мс (одна модель)"],
-        [SYS_RU["S7"], "spaCy ru_core_news_lg, дообучена на alrosait (MIT)", "3–4 мс (одна модель)"],
-        ["GLiNER Guard, GLiNER2", "системы из статьи авторов hivetrace (arXiv 2605.05277)", "—"],
-    ])
-
-    # ── 3. Сравнение с конкурентами (слепой замер)
-    rep.h("3. Наш сервис против конкурентов — слепой замер (модель v3)")
-    rep.p("Замер выполнен один раз, до каких-либо правок по этим наборам.")
-    rep.h("3.1. hivetrace/pii-bench — эксперты, домен поддержки", 2)
-    competitor_table(rep, R, "hive", "S5-v3", ["S6", "S7"], lambda o, m: False)
-    rep.h("3.2. alrosait/pii-synthetic-ru", 2)
-    competitor_table(rep, R, "alro", "S5-v3", ["S6", "S7"], lambda o, m: o == "S7",
-                     note="PIIDetector обучен на данных alrosait — его столбец серый, в итог не засчитан.")
-    rep.h("3.3. MultiCoNER — строчный текст без регистра", 2)
-    competitor_table(rep, R, "mcr", "S5-v3", ["S6", "S7"],
-                     lambda o, m: m in ("precision", "f1", "f1_overlap", "false_person_rate"),
-                     note="Разметка MultiCoNER неполная: больше половины «ложных» ФИО — неразмеченные настоящие имена. "
-                          "Точность, F1 и ложные ФИО на нём не показательны (серые).")
-
-    # ── 4. Итоговый счёт
-    rep.h("4. Итоговый счёт (раздел 3, серые ячейки не считаются)")
+    # ── Сводка
+    rep.h("3. Сводка")
     rows = []
-    for o in ("S6", "S7"):
-        w, ti, lo = rep.score[(o, "win")], rep.score[(o, "tie")], rep.score[(o, "loss")]
-        rows.append([SYS_RU[o], (str(w), "win"), (str(ti), "tie"), (str(lo), "loss")])
-    rep.table(["Против", "Выигрываем", "На уровне", "Проигрываем"], rows)
-
-    # ── 5. Опубликованные результаты
-    rep.h("5. Сравнение с опубликованными результатами (hivetrace, domain-часть)")
-    dom = R["hive_domain"]
-    ours, ci = dom["systems"]["S5-v3"]["f1"], dom["systems_ci95"]["S5-v3"]["f1"]
-    ci_txt = f"[{fmt('f1', ci[0])}; {fmt('f1', ci[1])}]"
-    rep.p(f"Правило: у опубликованных чисел нет интервалов, поэтому сравнение идёт с интервалом нашей метрики. "
-          f"Наш строгий F1 по ФИО = {fmt('f1', ours)}, 95 % ДИ {ci_txt}. Число ниже интервала — "
-          f"выигрываем, внутри — на уровне, выше — проигрываем. Правило подсчёта — как в статье: строгое совпадение "
-          f"границ, domain-часть набора.")
-    published = [("GLiNER Guard uni-encoder", 0.757), ("GLiNER Guard bi-encoder", 0.695), ("GLiNER2 Multi", 0.606),
-                 ("GLiNER Guard Omni", 0.523), ("GLiNER2 Large", 0.303)]
-    rows = []
-    for name, v in published:
-        verdict = "win" if v < ci[0] else "loss" if v > ci[1] else "tie"
-        rows.append([name + " (статья)", fmt("f1", v),
-                     (f"{fmt('f1', ours)}\nразница {fmt_diff('f1', ours - v)}\n{WORD[verdict]}", verdict)])
-    for s in ("S6", "S7"):
-        res = dom["pairs"][f"S5-v3|{s}"]["f1"]
-        rows.append([SYS_RU[s] + " (наш замер)", fmt("f1", dom["systems"][s]["f1"]),
-                     (f"{fmt('f1', ours)}\nразница {fmt_diff('f1', res['diff'])}\nДИ {fmt_ci('f1', res['ci95'])}\n"
-                      f"{WORD[res['verdict']]}", res["verdict"])])
-    rep.table(["Система", "Её F1 по ФИО", "НАШ F1 по ФИО"], rows,
-              "Проверка методики: для PIIDetector наш замер на всём hivetrace дал NAME F1 = 0,944 — ровно число, "
-              "опубликованное его авторами.")
-
-    # ── 6. Текущая версия
-    rep.h("6. Текущая версия (v3 + правила 18.09) против конкурентов")
-    rep.p("Правила настраивались на alrosait (dev по поправке 5), а классы ошибок hivetrace были известны по разбору. "
-          "Поэтому hivetrace здесь — не слепой замер, alrosait — серый целиком. MultiCoNER для правил не использовался.")
-    competitor_table(rep, R, "hive", "S5-r7", ["S6", "S7"], lambda o, m: False, count=False,
-                     note="Не слепой замер: цвета информативны, но в итоговый счёт раздела 4 не входят.")
-    competitor_table(rep, R, "alro", "S5-r7", ["S6", "S7"], lambda o, m: True, count=False,
-                     note="Серое целиком: правила настраивались на этом наборе.")
-    competitor_table(rep, R, "mcr", "S5-r7", ["S6", "S7"],
-                     lambda o, m: m in ("precision", "f1", "f1_overlap", "false_person_rate"), count=False)
-
-    # ── 7. Скорость
-    rep.h("7. Скорость (медиана, мс на текст, процессор без GPU)")
-    rep.p("Правило: сравниваются одинаковые вещи (модель с моделью). «На уровне» — разница не больше 25 %. "
-          "Время всего нашего сервиса (правила + модель + фильтр) с временем одной модели конкурента не сравнивается — серое.")
-    L = R["latency_median_ms"]
-
-    def speed(v_ours, v_other):
-        r = v_ours / v_other
-        return "win" if r < 0.8 else "loss" if r > 1.25 else "tie"
-    rows = []
-    for ds, name in (("hive", "hivetrace"), ("alro", "alrosait"), ("mcr", "MultiCoNER")):
-        v6, v7 = speed(3.47, L[ds]["S6"]), speed(3.47, L[ds]["S7"])
-        rows.append([name, f"{L[ds]['S6']:.1f}".replace(".", ","), f"{L[ds]['S7']:.1f}".replace(".", ","),
-                     (f"3,5 — {WORD[v6]}", v6), (f"3,5 — {WORD[v7]}", v7),
-                     (f"{L[ds]['S5-v3']:.1f} (весь сервис, не сравнивается)".replace(".", ","), "na")])
-    rep.table(["Набор", SYS_RU["S6"] + ", мс", SYS_RU["S7"] + ", мс", "НАША модель против redmadrobot",
-               "НАША модель против PIIDetector", "Наш сервис целиком, мс"], rows,
-              "Наша модель — медиана 3,47 мс на test_v2 (замер приёмки).")
-
-    # ── 8. Приёмка: мы против себя прежних
-    rep.h("8. Приёмка модели v3 по протоколу: новая модель против прежней")
-    rep.p("Код сервиса одинаковый, меняется только модель. Интервалы — из предрегистрированного замера (поправка 3).")
-    keys = [("ФИО: F1", False, "f1"), ("ФИО: замаскировано полностью", False, "full_masked"),
-            ("Без ПДн: ложное ФИО (доля текстов)", True, "false_person_rate"),
-            ("Утечки ПДн, все типы (доля)", True, "false_person_rate")]
-    rows = []
-    for ds, name in (("v2", "test_v2"), ("bench", "pii_benchmark"), ("ext", "factRuEval")):
-        dd = ACC["datasets"][ds]
+    total = defaultdict(Counter)
+    for ds, name, _, _ in DATASETS:
         row = [name]
-        for k, lower, m in keys:
-            lo, hi = dd["diff_ci95"][k]
-            if lower:
-                lo, hi = -hi, -lo
-            verdict = "win" if lo > 0 else "loss" if hi < 0 else "tie"
-            pct = m in PCT or "Утечки" in k
-            before, after = dd["prod"][k], dd["B"][k]
-            b_txt = (f"{before * 100:.1f} %" if pct else f"{before:.3f}").replace(".", ",")
-            a_txt = (f"{after * 100:.1f} %" if pct else f"{after:.3f}").replace(".", ",")
-            row.append(b_txt)
-            row.append((a_txt + f"\n{WORD[verdict]}", verdict))
-        rows.append(row)
-    rep.table(["Набор", "F1: прежняя", "F1: НАША v3", "Скрыто: прежняя", "Скрыто: НАША v3",
-               "Ложное ФИО: прежняя", "Ложное ФИО: НАША v3", "Утечки: прежняя", "Утечки: НАША v3"], rows,
-              "Красная ячейка factRuEval: одиночные фамилии без имени в новостях стали утекать чаще (3,1 → 7,9 %).")
+        for o in COMP:
+            c = Counter(verdicts[(ds, o, m)] for m in METRICS)
+            total[o].update(c)
+            if c["win"] + c["tie"] + c["loss"] == 0:
+                row.append(("не засчитано", "na"))
+                continue
+            best = "win" if c["win"] > c["loss"] else "loss" if c["loss"] > c["win"] else "tie"
+            row.append((f"выигрыш {c['win']} · вровень {c['tie']} · проигрыш {c['loss']}", best))
+        rows.append(row + [num("full_masked", R[ds]["systems"][OURS]["full_masked"])
+                           + f"  (redmadrobot {num('full_masked', R[ds]['systems']['S6']['full_masked'])}, "
+                             f"PIIDetector {num('full_masked', R[ds]['systems']['S7']['full_masked'])})"])
+    rows.append(["ИТОГО"] + [(f"выигрыш {total[o]['win']} · вровень {total[o]['tie']} · проигрыш {total[o]['loss']}",
+                              "win" if total[o]["win"] > total[o]["loss"] else "loss" if total[o]["loss"] > total[o]["win"]
+                              else "tie") for o in COMP] + [""])
+    rep.table(["Набор", "НАШ счёт против redmadrobot", "НАШ счёт против PIIDetector", "Наших имён скрыто полностью"],
+              rows, widths=[3.8, 4.6, 4.6, 4.3],
+              note="Счёт — по шести метрикам раздела 1; цвет ячейки — по большинству. Подробности по каждой "
+                   "метрике — в разделах 4 и 5.")
 
-    # ── 9. Утечки по типам на hivetrace: до и после правил
-    rep.h("9. Утечки по типам ПДн на hivetrace: до и после правил 18.09 (не слепой замер)")
+    # ── Против каждого конкурента
+    def versus(o, section):
+        rep.h(f"{section}. Мы против {COMP_FULL[o]}")
+        rows = []
+        for ds, name, why, _ in DATASETS:
+            rows.append(("GROUP", name, why))
+            for m in METRICS:
+                res = R[ds]["pairs"][f"{OURS}|{o}"][m]
+                v = verdicts[(ds, o, m)]
+                rows.append([METRIC_RU[m], num(m, R[ds]["systems"][o][m]),
+                             (num(m, R[ds]["systems"][OURS][m]), v), diff(m, res["diff"], res["ci95"]),
+                             (WORD[v], v)])
+        rep.table(["Метрика", f"{COMP[o]}", "НАШ результат", "Разница (границы)", "Итог"], rows,
+                  widths=[4.6, 2.6, 2.8, 4.6, 2.7])
+    versus("S6", 4)
+    versus("S7", 5)
+
+    # ── Опубликованные
+    rep.h("6. Сравнение с системами из статьи (hivetrace, domain-часть)")
+    dom = R["hive_domain"]
+    ours, ci = dom["systems"][OURS]["f1"], dom["systems_ci95"][OURS]["f1"]
+    rep.p(f"У опубликованных чисел нет границ разницы, поэтому их сравниваем с границами нашего результата: "
+          f"наш строгий F1 по ФИО = {num('f1', ours)}, границы {num('f1', ci[0])} … {num('f1', ci[1])}. "
+          f"Число ниже наших границ — выигрываем, внутри — на уровне, выше — проигрываем. Правило подсчёта — как "
+          f"в статье: строгое совпадение границ, domain-часть набора.")
+    rows = []
+    for name, v in [("GLiNER Guard uni-encoder", 0.757), ("GLiNER Guard bi-encoder", 0.695),
+                    ("GLiNER2 Multi", 0.606), ("GLiNER Guard Omni", 0.523), ("GLiNER2 Large", 0.303)]:
+        vd = "win" if v < ci[0] else "loss" if v > ci[1] else "tie"
+        rows.append([name + " (из статьи)", num("f1", v), (num("f1", ours), vd), f"{ours - v:+.3f}".replace(".", ","),
+                     (WORD[vd], vd)])
+    for o in COMP:
+        res = dom["pairs"][f"{OURS}|{o}"]["f1"]
+        rows.append([COMP[o] + " (наш замер)", num("f1", dom["systems"][o]["f1"]), (num("f1", ours), res["verdict"]),
+                     diff("f1", res["diff"], res["ci95"]), (WORD[res["verdict"]], res["verdict"])])
+    rep.table(["Система", "Её F1", "НАШ F1", "Разница", "Итог"], rows, widths=[5.5, 2.2, 2.4, 4.6, 2.6])
+
+    # ── Скорость
+    rep.h("7. Скорость")
+    L = R["latency_median_ms"]
+    rep.p("Сравнивается модель с моделью: медиана миллисекунд на текст на процессоре без видеокарты. «На уровне» — "
+          "разница не больше 25 %. Наша модель — 3,47 мс (замер на test_v2); весь наш сервис с правилами — "
+          f"{L['hive'][OURS]:.0f}–{L['alro'][OURS]:.0f} мс, с одной моделью конкурента его не сравниваем.")
+    rows = []
+    for o in COMP:
+        vals = [L[ds][o] for ds in ("hive", "alro", "mcr")]
+        lo, hi = min(vals), max(vals)
+        r_ = 3.47 / ((lo + hi) / 2)
+        vd = "win" if r_ < 0.8 else "loss" if r_ > 1.25 else "tie"
+        how = f"в {1 / r_:.0f} раз быстрее" if vd == "win" else "примерно столько же" if vd == "tie" else "медленнее"
+        rows.append([COMP_FULL[o], f"{lo:.1f}–{hi:.1f} мс".replace(".", ","), ("3,5 мс", vd), how, (WORD[vd], vd)])
+    rep.table(["Конкурент", "Его модель", "НАША модель", "Разница", "Итог"], rows, widths=[5.5, 2.8, 2.6, 3.8, 2.6])
+
+    # ── Утечки по типам
+    rep.h("8. Утечки остальных ПДн (hivetrace, последний прогон)")
+    rep.p("Конкуренты в этой проверке не участвуют: redmadrobot и PIIDetector мы запускали только на ФИО. Поэтому "
+          "здесь без цвета — просто наш результат: сколько значений каждого типа осталось в тексте.")
     raw = {r["id"]: r for r in map(json.loads, open(os.path.join(HERE, "hive.jsonl"), encoding="utf-8"))}
-    cnt = {}
-    for tag in ("v3", "r7"):
-        P = {r["id"]: r for r in map(json.loads, open(os.path.join(RES, f"preds_S5-{tag}_hive.jsonl"), encoding="utf-8"))}
-        tot, leak = Counter(), Counter()
-        for rid, r in raw.items():
-            for s in r["spans"]:
-                if s["type"].startswith("OTHER_"):
-                    continue
+    P = {r["id"]: r for r in map(json.loads, open(os.path.join(RES, f"preds_{OURS}_hive.jsonl"), encoding="utf-8"))}
+    tot, leak = Counter(), Counter()
+    for rid, r in raw.items():
+        for s in r["spans"]:
+            if not s["type"].startswith("OTHER_"):
                 tot[s["type"]] += 1
                 leak[s["type"]] += r["text"][s["start"]:s["stop"]] in P[rid]["anonymized"]
-        cnt[tag] = (tot, leak)
-    rows = []
-    for typ in sorted(cnt["v3"][0], key=lambda t: -cnt["v3"][1][t]):
-        b, a_, n = cnt["v3"][1][typ], cnt["r7"][1][typ], cnt["v3"][0][typ]
-        verdict = "win" if a_ < b else "loss" if a_ > b else "tie"
-        rows.append([typ, str(n), str(b), (f"{a_}  ({WORD[verdict] if verdict != 'tie' else 'без изменений'})", verdict)])
-    rep.table(["Тип", "Значений", "Утекло до", "Утекло после"], rows,
-              "Цвет здесь — направление изменения без интервала по типу. По всем типам вместе разница значима: "
-              "8,0 → 2,4 %, ДИ [−7,0; −4,4] п.п. Жёлтое — нулевые утечки до и после.")
+    ru = {"PERSON": "ФИО", "PHONE_NUMBER": "телефон", "ADDRESS": "адрес", "EMAIL_ADDRESS": "почта",
+          "PASSPORT": "паспорт", "INN": "ИНН", "SNILS": "СНИЛС", "CREDIT_CARD": "номер карты"}
+    rows = [[ru.get(t, t), str(tot[t]), str(leak[t]), f"{leak[t] / tot[t] * 100:.1f} %".replace(".", ",")]
+            for t in sorted(tot, key=lambda t: -leak[t])]
+    rows.append(["всего", str(sum(tot.values())), str(sum(leak.values())),
+                 f"{sum(leak.values()) / sum(tot.values()) * 100:.1f} %".replace(".", ",")])
+    rep.table(["Тип ПДн", "Значений в наборе", "Осталось в тексте", "Доля утечек"], rows, widths=[4, 4, 4, 4],
+              note="Адреса: часть «утечек» — город без улицы («Проживаю в Москве»), который по нашей политике не "
+                   "скрывается, а в наборе размечен как адрес.")
 
-    # ── 10. Выводы
-    rep.h("10. Выводы")
-    rep.h("Где выигрываем", 2)
-    rep.bullets([
-        "Доля полностью скрытых имён: значимо выше PIIDetector на hivetrace и MultiCoNER и выше redmadrobot на alrosait "
-        "и MultiCoNER; на hivetrace — на уровне redmadrobot (100 % против 99,6 %).",
-        "Строчный текст без регистра (MultiCoNER): скрыто 78 % имён против 50 % у redmadrobot и 1 % у PIIDetector.",
-        "Системы из статьи авторов hivetrace: все пять ниже нашего интервала F1.",
-        "Скорость модели против redmadrobot: в 10–16 раз быстрее.",
-        "Против себя прежних: F1 по ФИО вырос значимо на всех трёх наборах приёмки.",
-    ])
-    rep.h("Где на уровне", 2)
-    rep.bullets([
-        "Скорость модели против PIIDetector (3,5 мс против 3–4 мс).",
-        "Доля скрытых имён против redmadrobot на hivetrace (100 % против 99,6 %, различие не доказано).",
-    ])
-    rep.h("Где проигрываем", 2)
-    rep.bullets([
-        "Точность и строгий F1 по ФИО на hivetrace — и redmadrobot, и PIIDetector: у нас больше лишних масок "
-        "(захват соседнего слова, опечатки как имена).",
-        "Ложные ФИО в текстах без ФИО — на hivetrace против обоих конкурентов, на alrosait против redmadrobot "
-        "(на MultiCoNER метрика не показательна).",
-        "Строгая полнота и F1 по пересечению на hivetrace против redmadrobot: имена мы скрываем не хуже "
-        "(доля скрытых — на уровне), но границы маски чаще не совпадают с эталоном.",
-        "Точность и F1 против redmadrobot на alrosait (слепой замер модели v3).",
-        "Прежняя версия против новой на новостях (factRuEval): утечки одиночных фамилий.",
-    ])
+    # ── Выводы — из тех же вердиктов
+    rep.h("9. Выводы")
+    names = {ds: name for ds, name, _, _ in DATASETS}
+    for v, title_ in (("win", "Где выигрываем"), ("tie", "Где на уровне"), ("loss", "Где проигрываем")):
+        rep.h(title_, 2)
+        for o in COMP:
+            by_metric = defaultdict(list)
+            for (ds, oo, m), vv in verdicts.items():
+                if vv == v and oo == o:
+                    by_metric[m].append(names[ds])
+            par = rep.doc.add_paragraph(style="List Bullet")
+            par.add_run(f"Против {COMP[o]}: ").bold = True
+            par.add_run("; ".join(f"{METRIC_RU[m].lower()} — {', '.join(d_)}" for m, d_ in
+                                  sorted(by_metric.items(), key=lambda kv: METRICS.index(kv[0]))) or "нет")
     rep.h("Что это значит", 2)
-    rep.p("Наш сервис сильнее там, где важнее всего для обезличивания, — в полноте: имя реже остаётся открытым, "
-          "особенно в неаккуратном тексте. Слабее — в точности: чаще маскирует лишнее. Для задачи «не выпустить ПДн» "
-          "это правильная сторона ошибки, но лишние маски портят текст для дальнейшей обработки. Следующий шаг — "
-          "переобучение на трудных негативах и дистилляция из redmadrobot (БУДУЩИЕ_ПЛАНЫ.md, пп. 3 и 3а).")
+    rep.p("Наш сервис сильнее там, где для обезличивания важнее всего, — имена реже остаются открытыми, особенно в "
+          "неаккуратном тексте и на нашем домене. Слабее — в точности: чаще маскирует лишнее и не всегда попадает "
+          "в границы имени. Для задачи «не выпустить ПДн» это правильная сторона ошибки, но лишние маски портят "
+          "текст для дальнейшей обработки. Что делать дальше — в БУДУЩИЕ_ПЛАНЫ.md, пункты 3 и 3а.")
     rep.h("Ограничения", 2)
     rep.bullets([
         "Реальных обращений среди наборов нет; наборы домена поддержки синтетические.",
-        "Раздел 6 и 9 — не слепые замеры (классы ошибок были известны).",
-        "Все внешние наборы теперь использованы; следующая модель требует нового слепого набора.",
+        "hivetrace — замер не слепой: классы его ошибок разбирались при доработке правил 18.09.",
+        "test_v2 — наш домен, поэтому преимущество на нём ожидаемо; pii_benchmark — «свой» и для redmadrobot, и для нас.",
+        "Все внешние наборы теперь использованы; следующая версия требует нового слепого набора.",
     ])
+    rep.p("Файлы: data/eval_v2/results/competitors_paired.json (цифры), compare_competitors.py (расчёт), "
+          "report_competitors_docx.py (этот отчёт), PROTOCOL.md (протокол).", italic=True, size=9)
     rep.doc.save(a.out)
     print(a.out)
-    print({f"{o}:{v}": rep.score[(o, v)] for o in ("S6", "S7") for v in ("win", "tie", "loss")})
+    print({o: dict(total[o]) for o in COMP})
 
 
 if __name__ == "__main__":

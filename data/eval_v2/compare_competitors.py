@@ -29,6 +29,8 @@ METRICS = ["precision", "recall", "f1", "f1_overlap", "full_masked", "false_pers
 LOWER_IS_BETTER = {"false_person_rate"}
 PAIRS = [("S5-v3", "S6"), ("S5-v3", "S7"), ("S5-v3", "S5-prev"),
          ("S5-r7", "S6"), ("S5-r7", "S7"), ("S5-r7", "S5-v3")]
+# на наборах приёмки (test_v2, pii_benchmark, factRuEval) — только текущая версия против конкурентов
+PAIRS_LATEST = [("S5-r7", "S6"), ("S5-r7", "S7")]
 N_ITER, SEED = 2000, 2026
 
 
@@ -43,8 +45,8 @@ def verdict(lo, hi, metric):
     return "win" if lo > 0 else "loss" if hi < 0 else "tie"
 
 
-def compare(ds, rows, label):
-    systems = {s for p in PAIRS for s in p}
+def compare(ds, rows, label, pairs=PAIRS):
+    systems = {s for p in pairs for s in p}
     vec = {s: vectors(ds, rows, s) for s in systems}
     idx = np.random.default_rng(SEED).integers(0, len(rows), size=(N_ITER, len(rows)))
     boots = {s: [A.summ(vec[s][i].sum(0)) for i in idx] for s in systems}
@@ -54,7 +56,7 @@ def compare(ds, rows, label):
     out = {"dataset": label, "texts": len(rows),
            "systems": {s: {m: round(point[s][m], 4) for m in METRICS} for s in systems},
            "systems_ci95": ci, "pairs": {}}
-    for ours, other in PAIRS:
+    for ours, other in pairs:
         res = {}
         for m in METRICS:
             d = np.array([a[m] - b[m] for a, b in zip(boots[ours], boots[other])])
@@ -74,6 +76,8 @@ def main():
         if ds == "hive":                    # domain-часть — на ней опубликованы цифры GLiNER Guard
             dom = [r for r in rows if meta[r["id"]]["meta"]["split"] == "domain"]
             report["hive_domain"] = compare(ds, dom, "hive_domain")
+    for ds in ("v2", "bench", "ext"):
+        report[ds] = compare(ds, load_dataset(ds), ds, PAIRS_LATEST)
     lat = {}
     for ds in ("hive", "alro", "mcr"):
         lat[ds] = {s: float(np.median([p["ms"] for p in A.load_preds(s, ds).values()]))
@@ -81,7 +85,7 @@ def main():
     report["latency_median_ms"] = lat
     with open(os.path.join(A.RES, "competitors_paired.json"), "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
-    for ds in ("hive", "hive_domain", "alro", "mcr"):
+    for ds in ("hive", "hive_domain", "alro", "mcr", "v2", "bench", "ext"):
         print(f"== {ds}")
         for pair, res in report[ds]["pairs"].items():
             print(f"   {pair:16}", {m: (res[m]["diff"], res[m]["verdict"]) for m in ("f1", "full_masked",
