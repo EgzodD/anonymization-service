@@ -212,7 +212,8 @@ def main():
          "самая точная из найденных открытых моделей; крупная и медленная"],
         [COMP_FULL["S7"], "открытый проект PIIDetector: spaCy + Presidio, то же устройство, что у нас "
                           "(модель + правила)", "прямой аналог; обучен на наборе alrosait"],
-        ["GLiNER Guard, GLiNER2", "модели компании HiveTrace из статьи к набору hivetrace (arXiv 2605.05277)",
+        ["GLiNER Guard, GLiNER2", "модели компании HiveTrace из статьи «GLiNER Guard: Unified Encoder Family for "
+                                  "Production LLM Safety and Privacy» (arXiv:2605.05277, 6 мая 2026 г.)",
          "мы их не запускали — сравниваем с опубликованными числами"],
     ], widths=[4.5, 7.5, 5.3])
 
@@ -290,6 +291,7 @@ def main():
 
     # ── Опубликованные
     rep.h("6. Сравнение с системами из статьи (hivetrace, domain-часть)")
+    rep.p("Статья: " + 'Minko B., Sadiekh S., Kokuykin E. «GLiNER Guard: Unified Encoder Family for Production LLM Safety and Privacy». arXiv:2605.05277, опубликована 6 мая 2026 г. (https://arxiv.org/abs/2605.05277). Авторы — компания HiveTrace; в той же работе выпущен набор hivetrace/pii-bench.', italic=True)
     dom = R["hive_domain"]
     ours, ci = dom["systems"][OURS]["f1"], dom["systems_ci95"][OURS]["f1"]
     rep.p(f"У опубликованных чисел нет границ разницы, поэтому их сравниваем с границами нашего результата: "
