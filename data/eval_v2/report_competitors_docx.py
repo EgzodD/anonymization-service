@@ -358,7 +358,7 @@ def main():
                     by_metric[m].append(names[ds])
             par = rep.doc.add_paragraph(style="List Bullet")
             par.add_run(f"Против {COMP[o]}: ").bold = True
-            par.add_run("; ".join(f"{METRIC_RU[m].lower()} — {', '.join(d_)}" for m, d_ in
+            par.add_run("; ".join(f"{METRIC_RU[m]} — {', '.join(d_)}" for m, d_ in
                                   sorted(by_metric.items(), key=lambda kv: METRICS.index(kv[0]))) or "нет")
     rep.h("Что это значит", 2)
     rep.p("Наш сервис сильнее там, где для обезличивания важнее всего, — имена реже остаются открытыми, особенно в "
