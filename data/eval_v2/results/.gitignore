@@ -1,0 +1,9 @@
+# Промежуточные прогоны при подборе правил (метки r1…r6, B, Ba, Bab, prod, prodab):
+# воспроизводятся run_eval.py, в git не нужны. Итоговые прогоны (r7, final-*, all_*)
+# отслеживаются обычным порядком.
+preds_S5-r[1-6]_*.jsonl
+preds_S5-B_*.jsonl
+preds_S5-Ba_*.jsonl
+preds_S5-Bab_*.jsonl
+preds_S5-prod_*.jsonl
+preds_S5-prodab_*.jsonl
