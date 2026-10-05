@@ -25,9 +25,9 @@ fi
 
 echo "▶ Линтер (статический анализ, ruff)"
 if [ -x .venv/bin/ruff ]; then
-    .venv/bin/ruff check app/ tests/
+    .venv/bin/ruff check app/ tests/ synthesizer/
 else
-    "$PY" -m ruff check app/ tests/
+    "$PY" -m ruff check app/ tests/ synthesizer/
 fi
 
 echo

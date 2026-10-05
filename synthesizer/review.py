@@ -12,7 +12,8 @@
   4) не попало ли в ⟪негативы⟫ то, что на самом деле является ПДн.
 
 Запуск:
-    .venv/bin/python data/synth/review.py data/synth/pilot_v2.jsonl > pilot_v2_review.txt
+    .venv/bin/python -m synthesizer.review synthesizer/runs/2026-10-05__run.jsonl \
+        > synthesizer/runs/2026-10-05__run_review.txt
 """
 import json
 import sys
