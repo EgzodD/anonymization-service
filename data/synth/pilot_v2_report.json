@@ -1,0 +1,50 @@
+{
+  "model": "qwen3:8b",
+  "texts": 50,
+  "rejected": 0,
+  "reject_share": 0.0,
+  "reasons": {
+    "unknown_tag": 0,
+    "leftover": 0,
+    "duplicate": 0,
+    "near_duplicate": 0,
+    "no_tags": 0,
+    "extra_pii": 0
+  },
+  "requests": 17,
+  "tokens": 3448,
+  "minutes": 24.4,
+  "tokens_per_sec": 2.4,
+  "sec_per_text": 29.3,
+  "scenarios": {
+    "negative_only": 10,
+    "with_negatives": 35,
+    "with_typos": 18,
+    "lowercase": 3,
+    "domains": 11
+  },
+  "typos": {
+    "words": 68,
+    "person_fp": 5,
+    "examples": [
+      "зздравствуйте",
+      "можо",
+      "озвони",
+      "расписнаия",
+      "чтобыы"
+    ]
+  },
+  "negatives": {
+    "spans": 63,
+    "person_fp": 3,
+    "examples": [
+      "Борис Годунов",
+      "Евгений",
+      "Евгений Онегин"
+    ]
+  },
+  "similarity": {
+    "max_accepted": 0.049,
+    "mean_accepted": 0.013
+  }
+}

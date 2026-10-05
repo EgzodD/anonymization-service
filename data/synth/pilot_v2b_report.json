@@ -1,0 +1,49 @@
+{
+  "model": "qwen3:8b",
+  "texts": 20,
+  "rejected": 2,
+  "reject_share": 0.1,
+  "reasons": {
+    "unknown_tag": 0,
+    "leftover": 0,
+    "duplicate": 0,
+    "near_duplicate": 0,
+    "no_tags": 0,
+    "no_person": 2,
+    "extra_pii": 0
+  },
+  "requests": 7,
+  "tokens": 1813,
+  "minutes": 11.7,
+  "tokens_per_sec": 2.6,
+  "sec_per_text": 35.2,
+  "scenarios": {
+    "negative_only": 6,
+    "with_negatives": 15,
+    "with_typos": 7,
+    "lowercase": 3,
+    "domains": 6
+  },
+  "typos": {
+    "words": 35,
+    "person_fp": 4,
+    "examples": [
+      "Здравствуйие",
+      "мення",
+      "мжоно",
+      "нунжо"
+    ]
+  },
+  "negatives": {
+    "spans": 37,
+    "person_fp": 2,
+    "examples": [
+      "Евгений Онегин",
+      "Мчедлишвили"
+    ]
+  },
+  "similarity": {
+    "max_accepted": 0.053,
+    "mean_accepted": 0.015
+  }
+}
