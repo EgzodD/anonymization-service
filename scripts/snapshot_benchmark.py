@@ -177,7 +177,9 @@ def main() -> int:
         "snapshot_utc": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M"),
         "commit": git("rev-parse", "--short", "HEAD"),
         "commit_date": git("log", "-1", "--date=short", "--pretty=%ad"),
-        "dirty": bool(git("status", "--porcelain")),
+        # Только отслеживаемые файлы: неотслеживаемые (локальные архивы, .claude/)
+        # на воспроизводимость прогона не влияют, а флаг от них был бы всегда true.
+        "dirty": bool(git("status", "--porcelain", "--untracked-files=no")),
         "our_system": args.our_system,
         "person_model": person_model_label(),
         "datasets_sha256": {
