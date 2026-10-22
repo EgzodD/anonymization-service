@@ -21,13 +21,21 @@ jobs:
       - name: Установка зависимостей
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          # Именно requirements-dev.txt: он тянет requirements.txt плюс reportlab
+          # и pytest-cov. Без reportlab шесть тестов PDF-адаптера молча уходили в
+          # skip по importorskip — «полный прогон» был менее полным, чем быстрый
+          # контур в ci.yml, который dev-зависимости ставит.
+          pip install -r requirements-dev.txt
           python -m spacy download ru_core_news_lg
-          pip install pytest-cov
 
       # Полный прогон набора. Если модель подключена (см. privacy-gate в ci.yml) —
       # сюда же встанет requires_model; без модели требующие её тесты пропустятся.
       - name: Полный прогон тестов
+        env:
+          # Модели PERSON в чекауте нет, а без неё сервис намеренно не стартует.
+          # Тесты это и так учитывают (conftest), но флаг ставим явно — как в ci.yml,
+          # чтобы два контура отличались только составом тестов, а не окружением.
+          ALLOW_NO_PERSON_MODEL: "true"
         run: pytest -q --cov=app --cov-report=term-missing
 
       # TODO (когда будет модель-артефакт и стенд):
