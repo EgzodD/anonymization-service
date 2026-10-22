@@ -3,7 +3,7 @@
 Микросервис анонимизации персональных данных в русскоязычных текстах.
 Использует Microsoft Presidio + кастомные распознаватели для русского языка.
 
-**Версия 1.0.0.** История изменений — [`CHANGELOG.md`](CHANGELOG.md), замеры качества
+**Версия 1.0.1.** История изменений — [`CHANGELOG.md`](CHANGELOG.md), замеры качества
 по версиям — [`benchmarks/`](benchmarks/README.md), правила нумерации — раздел 11.
 
 **Самостоятельный сервис.** Ядро (обезличивание текста через `/anonymize/text`)
@@ -729,7 +729,7 @@ anonymization-module/
 
 Нумерация — [SemVer](https://semver.org/lang/ru/) `MAJOR.MINOR.PATCH`. История
 изменений — [`CHANGELOG.md`](CHANGELOG.md), замеры качества по версиям —
-[`benchmarks/`](benchmarks/README.md). Текущая версия — **1.0.0**.
+[`benchmarks/`](benchmarks/README.md). Текущая версия — **1.0.1**.
 
 Что повышает разряд именно в этом модуле:
 

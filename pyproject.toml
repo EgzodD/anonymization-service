@@ -4,7 +4,7 @@
 # Правила нумерации и история изменений — CHANGELOG.md.
 [project]
 name = "anonymization-service"
-version = "1.0.0"
+version = "1.0.1"
 description = "Микросервис обезличивания персональных данных в русскоязычных текстах"
 requires-python = ">=3.12"
 
