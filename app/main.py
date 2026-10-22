@@ -9,6 +9,7 @@ import logging
 
 from fastapi import Depends, FastAPI
 
+from app import __version__
 from app.anonymizer import (
     EXCLUDED_ENTITIES,
     analyzer_engine,
@@ -24,7 +25,7 @@ from app.models import (
     DeanonymizeResponse,
     HealthResponse,
 )
-from app.person_transformer_recognizer import person_model_available
+from app.person_transformer_recognizer import person_model_available, person_model_name
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +114,10 @@ _description = _CORE_DESCRIPTION + (
 app = FastAPI(
     title="Anonymization Service",
     description=_description,
-    version="2.0.0",
+    # Версия модуля из app/__init__.py. До 1.0.0 здесь стояло "2.0.0" из шаблона
+    # первого коммита — число ни разу не менялось за 114 коммитов и ничего не
+    # значило. Теперь номер один на всё: git-тег, образ, OpenAPI, /health.
+    version=__version__,
 )
 
 # ─── Опциональная интеграция с Chatwoot ────────────────────────────────────
@@ -190,8 +194,10 @@ def health_check():
 
     return HealthResponse(
         status=status,
+        version=__version__,
         analyzer_ready=analyzer_ready,
         person_model_loaded=person_ready,
+        person_model=person_model_name(),
         db_connected=db_ok,
         chatwoot_enabled=settings.chatwoot_enabled,
         supported_entities=sorted(filtered),

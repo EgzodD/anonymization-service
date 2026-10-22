@@ -40,6 +40,18 @@ def person_model_available() -> bool:
     )
 
 
+def person_model_name() -> str | None:
+    """Метка подключённой модели ФИО или None, если модели нет.
+
+    Отдаём только имя (PERSON_MODEL_NAME или имя папки), но не путь: раскрывать
+    раскладку файловой системы в публичном /health незачем.
+    """
+    if not person_model_available():
+        return None
+    declared = settings.person_model_name.strip()
+    return declared or os.path.basename(os.path.normpath(PERSON_MODEL_DIR))
+
+
 # Слова-метки ПДн и частые существительные, которые модель иногда метит как ФИО
 # (особенно с заглавной в начале предложения). Именами не бывают — не маскируем.
 _PERSON_STOPWORDS = frozenset({

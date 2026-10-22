@@ -3,6 +3,9 @@
 Микросервис анонимизации персональных данных в русскоязычных текстах.
 Использует Microsoft Presidio + кастомные распознаватели для русского языка.
 
+**Версия 1.0.0.** История изменений — [`CHANGELOG.md`](CHANGELOG.md), замеры качества
+по версиям — [`benchmarks/`](benchmarks/README.md), правила нумерации — раздел 11.
+
 **Самостоятельный сервис.** Ядро (обезличивание текста через `/anonymize/text`)
 работает автономно и не требует БД. Интеграция с Chatwoot — **опциональная**,
 включается флагом `CHATWOOT_ENABLED=true` и добавляет эндпоинты для работы
@@ -244,8 +247,10 @@ curl http://localhost:8000/health
 ```json
 {
   "status": "ok",
+  "version": "1.0.0",
   "analyzer_ready": true,
   "person_model_loaded": true,
+  "person_model": "person_ruBERT",
   "db_connected": null,
   "chatwoot_enabled": false,
   "supported_entities": ["ADDRESS", "AGE", "CREDIT_CARD", "CRYPTO", "DATE_OF_BIRTH", "DATE_TIME",
@@ -263,6 +268,11 @@ IP-адрес, URL, IBAN, дата и время) тоже маскируютс�
 `CHATWOOT_ENABLED=true` поле показывает `true`/`false` по состоянию базы, а
 `status` становится `degraded`, если база недоступна.
 
+`version` — версия модуля (SemVer). По работающему контейнеру всегда видно, что в нём
+запущено; история изменений — в `CHANGELOG.md`. `person_model` — метка подключённой
+модели ФИО (имя папки или `PERSON_MODEL_NAME`): качество зависит от модели не меньше,
+чем от кода, а по номеру версии её не опознать. Путь к модели наружу не отдаётся.
+
 `person_model_loaded` показывает, загружена ли модель распознавания ФИО. **В проде
 должно быть `true`.** Если `false` — ФИО не распознаются и уйдут в ответ открытым
 текстом; `status` при этом `degraded`. Обычно сервис в таком состоянии просто не
@@ -279,9 +289,9 @@ http://localhost:8000/docs
 Два вызова. Если `API_KEY` задан, добавьте к ним `-H "X-API-Key: <ключ>"`.
 
 ```bash
-# 1. Модель ФИО загружена
+# 1. Модель ФИО загружена, версия — та, которую ожидаем
 curl -s http://localhost:8000/health
-# ждём: "status": "ok" и "person_model_loaded": true
+# ждём: "status": "ok", "person_model_loaded": true и нужный "version"
 
 # 2. Обезличивание работает, исходные значения по умолчанию не отдаются
 curl -s -X POST http://localhost:8000/anonymize/text \
@@ -693,17 +703,73 @@ anonymization-module/
 │   ├── check.sh                   # Линтер + тесты + покрытие (локальная замена CI)
 │   ├── test_menu.py               # Меню запуска тестов по категориям
 │   ├── demo_examples.py           # Показ «вход → выход» на примерах
+│   ├── snapshot_benchmark.py      # Снимок замеров текущей версии в benchmarks/<версия>/
 │   └── fetch_person_model.sh      # Загрузка модели по ссылке (PERSON_MODEL_URL)
 ├── data/
 │   ├── ru_training_data.csv       # Датасет для проверки качества распознавания
 │   └── training/                  # Обучение и оценка модели PERSON: наборы train/dev/test, ноутбуки, скрипты метрик
+├── benchmarks/                    # Замеры качества по версиям: metrics.json + meta.json (происхождение цифр)
+│   └── v1.0.0/
+├── synthesizer/                   # Синтез обучающих данных (инструмент разработки, не входит в поставку)
+├── CHANGELOG.md                   # Журнал изменений по версиям (Keep a Changelog + SemVer)
 ├── .github/workflows/             # CI: ci.yml (на каждый push), nightly.yml (по расписанию)
 ├── Dockerfile                     # Образ сервиса
 ├── docker-compose.yml             # Запуск контейнера (и БД для режима Chatwoot)
 ├── init.sql                       # Тестовые данные для локальной БД
 ├── requirements.txt               # Зависимости сервиса
 ├── requirements-dev.txt           # + зависимости для тестов
-├── pyproject.toml                 # Настройки pytest (маркеры) и ruff
+├── pyproject.toml                 # Версия модуля, настройки pytest (маркеры) и ruff
 ├── .env.example                   # Шаблон переменных окружения
 └── .dockerignore
 ```
+
+---
+
+## 11. Версии и релизы
+
+Нумерация — [SemVer](https://semver.org/lang/ru/) `MAJOR.MINOR.PATCH`. История
+изменений — [`CHANGELOG.md`](CHANGELOG.md), замеры качества по версиям —
+[`benchmarks/`](benchmarks/README.md). Текущая версия — **1.0.0**.
+
+Что повышает разряд именно в этом модуле:
+
+| Разряд | Повод |
+|---|---|
+| MAJOR | ломается совместимость с клиентом: формат ответа API, имена эндпоинтов, названия плейсхолдеров (`<PHONE>` → `<PHONE_NUMBER>`), состав обязательных переменных окружения |
+| MINOR | добавлена возможность, старые вызовы работают как раньше: новый тип ПДн, адаптер, новая модель ФИО |
+| PATCH | исправление: поправленный regex, закрытая утечка, фикс рассинхрона |
+
+### Где лежит номер
+
+Единственный источник — `app/__init__.py` (`__version__`). Оттуда он попадает в
+OpenAPI, в `/health` и в теги. В `pyproject.toml` номер дублируется (pyproject не
+умеет читать его из кода без системы сборки); расхождение двух мест ловит
+`tests/test_version.py`, поэтому править нужно оба файла.
+
+### Как выпустить версию
+
+```bash
+# 1. Номер в обоих местах + раздел в CHANGELOG.md (без него упадёт tests/test_version.py)
+#    app/__init__.py:__version__  и  pyproject.toml:[project].version
+
+# 2. Проверки
+./scripts/check.sh
+
+# 3. Снимок замеров (если прогон на наборах делался заново)
+python scripts/snapshot_benchmark.py
+
+# 4. Коммит, тег, отправка
+git commit -am "Версия 1.1.0: <о чём выпуск>"
+git tag -a v1.1.0 -m "<краткое описание>"
+git push gitea main --tags
+git push origin main --tags
+
+# 5. Образ с тегом версии (иначе latest, и по контейнеру не понять, что в нём)
+ANONYMIZER_VERSION=1.1.0 docker compose build
+```
+
+Вернуться к прошлой версии: `git checkout v1.0.0`.
+Посмотреть, что изменилось между версиями: `git log --oneline v0.10.0..v1.0.0`.
+
+Теги до `v1.0.0` расставлены задним числом по истории git — это границы этапов
+работы, а не публиковавшиеся наружу релизы.

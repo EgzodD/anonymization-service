@@ -87,11 +87,20 @@ class DeanonymizeResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: str
+    # Версия модуля (SemVer) — по работающему контейнеру всегда видно, что запущено.
+    # Источник: app/__init__.py:__version__.
+    version: str
     analyzer_ready: bool
     # false = модель PERSON не загружена, ФИО НЕ распознаются. Вынесено в health
     # осознанно: снаружи это единственный способ отличить рабочий сервис от того,
     # который пропускает ФИО. В проде значение всегда должно быть true.
     person_model_loaded: bool
+    # Имя дообученной модели ФИО: PERSON_MODEL_NAME, иначе имя папки из
+    # PERSON_MODEL_DIR. Нужно, чтобы отличить прогон на разных моделях при
+    # одной и той же версии кода (цифры качества зависят от модели не меньше).
+    # Отдаём только имя, не путь: раскрывать раскладку файловой системы наружу
+    # незачем. null = модель не подключена.
+    person_model: str | None = None
     db_connected: bool | None = None  # null = интеграция с Chatwoot выключена, БД не проверялась
     chatwoot_enabled: bool
     supported_entities: list[str]

@@ -31,6 +31,14 @@ COPY app/ ./app/
 # COPY их сохраняет, и сервис, запущенный от appuser, не смог бы прочитать веса.
 COPY --chown=appuser:appuser models/person_ruBERT/ ./models/person_ruBERT/
 
+# Версия образа. Передаётся сборкой (docker-compose подставляет ANONYMIZER_VERSION),
+# по умолчанию "dev" — чтобы ненамеченный локальный образ не выглядел релизным.
+# ARG намеренно в конце файла: смена версии не должна инвалидировать слои с
+# torch/transformers/spacy, их пересборка занимает десятки минут.
+ARG VERSION=dev
+LABEL org.opencontainers.image.title="Anonymization Service" \
+      org.opencontainers.image.version="$VERSION"
+
 EXPOSE 8000
 
 USER appuser
