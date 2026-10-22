@@ -1,0 +1,465 @@
+{
+  "version": "1.0.0",
+  "our_system": "S5-r7",
+  "datasets": {
+    "hive": {
+      "title": "hivetrace/pii-bench",
+      "texts": 1810,
+      "ours": {
+        "precision": 0.8083,
+        "recall": 0.943,
+        "f1": 0.8704,
+        "f1_overlap": 0.9231,
+        "full_masked": 1.0,
+        "false_person_rate": 0.0209
+      },
+      "others": {
+        "S5-prev": {
+          "precision": 0.5,
+          "recall": 0.8728,
+          "f1": 0.6358,
+          "f1_overlap": 0.7125,
+          "full_masked": 0.9693,
+          "false_person_rate": 0.0923
+        },
+        "S5-v3": {
+          "precision": 0.7651,
+          "recall": 0.943,
+          "f1": 0.8448,
+          "f1_overlap": 0.8959,
+          "full_masked": 1.0,
+          "false_person_rate": 0.024
+        },
+        "S7": {
+          "precision": 0.9677,
+          "recall": 0.9211,
+          "f1": 0.9438,
+          "f1_overlap": 0.9573,
+          "full_masked": 0.9254,
+          "false_person_rate": 0.0019
+        },
+        "S6": {
+          "precision": 0.9701,
+          "recall": 0.9956,
+          "f1": 0.9827,
+          "f1_overlap": 0.9827,
+          "full_masked": 0.9956,
+          "false_person_rate": 0.0038
+        }
+      },
+      "ours_ci95": {
+        "precision": [
+          0.7589,
+          0.8528
+        ],
+        "recall": [
+          0.9113,
+          0.9708
+        ],
+        "f1": [
+          0.8327,
+          0.9045
+        ],
+        "f1_overlap": [
+          0.8978,
+          0.9464
+        ],
+        "full_masked": [
+          1.0,
+          1.0
+        ],
+        "false_person_rate": [
+          0.0139,
+          0.028
+        ]
+      },
+      "ours_latency_ms_median": 11.37
+    },
+    "hive_domain": {
+      "title": "hivetrace/pii-bench, срез hive_domain",
+      "texts": 900,
+      "ours": {
+        "precision": 0.8043,
+        "recall": 0.9367,
+        "f1": 0.8655,
+        "f1_overlap": 0.924,
+        "full_masked": 1.0,
+        "false_person_rate": 0.0296
+      },
+      "others": {
+        "S5-prev": {
+          "precision": 0.5537,
+          "recall": 0.8481,
+          "f1": 0.67,
+          "f1_overlap": 0.765,
+          "full_masked": 0.9557,
+          "false_person_rate": 0.0943
+        },
+        "S5-v3": {
+          "precision": 0.7668,
+          "recall": 0.9367,
+          "f1": 0.8433,
+          "f1_overlap": 0.9003,
+          "full_masked": 1.0,
+          "false_person_rate": 0.031
+        },
+        "S7": {
+          "precision": 0.9726,
+          "recall": 0.8987,
+          "f1": 0.9342,
+          "f1_overlap": 0.9408,
+          "full_masked": 0.9051,
+          "false_person_rate": 0.0027
+        },
+        "S6": {
+          "precision": 0.9874,
+          "recall": 0.9937,
+          "f1": 0.9905,
+          "f1_overlap": 0.9905,
+          "full_masked": 0.9937,
+          "false_person_rate": 0.0013
+        }
+      },
+      "ours_ci95": {
+        "precision": [
+          0.75,
+          0.8623
+        ],
+        "recall": [
+          0.8979,
+          0.9732
+        ],
+        "f1": [
+          0.8225,
+          0.9079
+        ],
+        "f1_overlap": [
+          0.8932,
+          0.9513
+        ],
+        "full_masked": [
+          1.0,
+          1.0
+        ],
+        "false_person_rate": [
+          0.0177,
+          0.0418
+        ]
+      }
+    },
+    "alro": {
+      "title": "alrosait/pii-synthetic-ru",
+      "texts": 4500,
+      "ours": {
+        "precision": 0.8772,
+        "recall": 0.9793,
+        "f1": 0.9254,
+        "f1_overlap": 0.9438,
+        "full_masked": 0.9884,
+        "false_person_rate": 0.0859
+      },
+      "others": {
+        "S5-prev": {
+          "precision": 0.4994,
+          "recall": 0.7331,
+          "f1": 0.5941,
+          "f1_overlap": 0.7773,
+          "full_masked": 0.9388,
+          "false_person_rate": 0.2406
+        },
+        "S5-v3": {
+          "precision": 0.7884,
+          "recall": 0.9364,
+          "f1": 0.8561,
+          "f1_overlap": 0.9111,
+          "full_masked": 0.9864,
+          "false_person_rate": 0.1102
+        },
+        "S7": {
+          "precision": 0.9969,
+          "recall": 0.9969,
+          "f1": 0.9969,
+          "f1_overlap": 0.9986,
+          "full_masked": 0.9986,
+          "false_person_rate": 0.001
+        },
+        "S6": {
+          "precision": 0.8832,
+          "recall": 0.913,
+          "f1": 0.8978,
+          "f1_overlap": 0.9824,
+          "full_masked": 0.9289,
+          "false_person_rate": 0.0187
+        }
+      },
+      "ours_ci95": {
+        "precision": [
+          0.8644,
+          0.8901
+        ],
+        "recall": [
+          0.9738,
+          0.9842
+        ],
+        "f1": [
+          0.9171,
+          0.9335
+        ],
+        "f1_overlap": [
+          0.9373,
+          0.9503
+        ],
+        "full_masked": [
+          0.9844,
+          0.992
+        ],
+        "false_person_rate": [
+          0.0736,
+          0.0988
+        ]
+      },
+      "ours_latency_ms_median": 17.73
+    },
+    "mcr": {
+      "title": "MultiCoNER ru",
+      "texts": 4000,
+      "ours": {
+        "precision": 0.2164,
+        "recall": 0.497,
+        "f1": 0.3015,
+        "f1_overlap": 0.5598,
+        "full_masked": 0.7841,
+        "false_person_rate": 0.2154
+      },
+      "others": {
+        "S5-prev": {
+          "precision": 0.1022,
+          "recall": 0.4162,
+          "f1": 0.1641,
+          "f1_overlap": 0.3709,
+          "full_masked": 0.772,
+          "false_person_rate": 0.4938
+        },
+        "S5-v3": {
+          "precision": 0.2151,
+          "recall": 0.4958,
+          "f1": 0.3,
+          "f1_overlap": 0.5584,
+          "full_masked": 0.7829,
+          "false_person_rate": 0.2154
+        },
+        "S7": {
+          "precision": 0.2286,
+          "recall": 0.0097,
+          "f1": 0.0185,
+          "f1_overlap": 0.0602,
+          "full_masked": 0.0097,
+          "false_person_rate": 0.0025
+        },
+        "S6": {
+          "precision": 0.2598,
+          "recall": 0.3607,
+          "f1": 0.302,
+          "f1_overlap": 0.5576,
+          "full_masked": 0.5054,
+          "false_person_rate": 0.0985
+        }
+      },
+      "ours_ci95": {
+        "precision": [
+          0.1974,
+          0.2356
+        ],
+        "recall": [
+          0.4625,
+          0.5321
+        ],
+        "f1": [
+          0.2772,
+          0.325
+        ],
+        "f1_overlap": [
+          0.5396,
+          0.5792
+        ],
+        "full_masked": [
+          0.7552,
+          0.8108
+        ],
+        "false_person_rate": [
+          0.2013,
+          0.2293
+        ]
+      },
+      "ours_latency_ms_median": 10.445
+    },
+    "v2": {
+      "title": "наш test_v2 (приёмочный, 480)",
+      "texts": 480,
+      "ours": {
+        "precision": 0.957,
+        "recall": 0.9458,
+        "f1": 0.9514,
+        "f1_overlap": 0.9846,
+        "full_masked": 0.967,
+        "false_person_rate": 0.0125
+      },
+      "others": {
+        "S7": {
+          "precision": 0.91,
+          "recall": 0.6675,
+          "f1": 0.7701,
+          "f1_overlap": 0.8163,
+          "full_masked": 0.6863,
+          "false_person_rate": 0.025
+        },
+        "S6": {
+          "precision": 0.694,
+          "recall": 0.6792,
+          "f1": 0.6865,
+          "f1_overlap": 0.9893,
+          "full_masked": 0.6792,
+          "false_person_rate": 0.0
+        }
+      },
+      "ours_ci95": {
+        "precision": [
+          0.9343,
+          0.9783
+        ],
+        "recall": [
+          0.9234,
+          0.9666
+        ],
+        "f1": [
+          0.9302,
+          0.9706
+        ],
+        "f1_overlap": [
+          0.9747,
+          0.9928
+        ],
+        "full_masked": [
+          0.9482,
+          0.9821
+        ],
+        "false_person_rate": [
+          0.0,
+          0.04
+        ]
+      }
+    },
+    "bench": {
+      "title": "redmadrobot/pii_benchmark",
+      "texts": 2841,
+      "ours": {
+        "precision": 0.6187,
+        "recall": 0.6584,
+        "f1": 0.6379,
+        "f1_overlap": 0.8416,
+        "full_masked": 0.8161,
+        "false_person_rate": 0.029
+      },
+      "others": {
+        "S7": {
+          "precision": 0.6203,
+          "recall": 0.4102,
+          "f1": 0.4938,
+          "f1_overlap": 0.6837,
+          "full_masked": 0.4978,
+          "false_person_rate": 0.0167
+        },
+        "S6": {
+          "precision": 0.9222,
+          "recall": 0.8657,
+          "f1": 0.8931,
+          "f1_overlap": 0.9443,
+          "full_masked": 0.8905,
+          "false_person_rate": 0.003
+        }
+      },
+      "ours_ci95": {
+        "precision": [
+          0.5576,
+          0.679
+        ],
+        "recall": [
+          0.5771,
+          0.73
+        ],
+        "f1": [
+          0.5731,
+          0.6983
+        ],
+        "f1_overlap": [
+          0.8035,
+          0.8789
+        ],
+        "full_masked": [
+          0.7242,
+          0.8889
+        ],
+        "false_person_rate": [
+          0.0225,
+          0.0361
+        ]
+      }
+    },
+    "ext": {
+      "title": "factRuEval-2016",
+      "texts": 995,
+      "ours": {
+        "precision": 0.8354,
+        "recall": 0.8565,
+        "f1": 0.8458,
+        "f1_overlap": 0.9156,
+        "full_masked": 0.9093,
+        "false_person_rate": 0.0898
+      },
+      "others": {
+        "S7": {
+          "precision": 0.7944,
+          "recall": 0.5918,
+          "f1": 0.6783,
+          "f1_overlap": 0.7397,
+          "full_masked": 0.6416,
+          "false_person_rate": 0.0969
+        },
+        "S6": {
+          "precision": 0.9235,
+          "recall": 0.8342,
+          "f1": 0.8766,
+          "f1_overlap": 0.9266,
+          "full_masked": 0.8632,
+          "false_person_rate": 0.0118
+        }
+      },
+      "ours_ci95": {
+        "precision": [
+          0.8117,
+          0.8593
+        ],
+        "recall": [
+          0.8347,
+          0.878
+        ],
+        "f1": [
+          0.825,
+          0.8657
+        ],
+        "f1_overlap": [
+          0.9025,
+          0.9276
+        ],
+        "full_masked": [
+          0.8904,
+          0.927
+        ],
+        "false_person_rate": [
+          0.0632,
+          0.1159
+        ]
+      }
+    }
+  }
+}

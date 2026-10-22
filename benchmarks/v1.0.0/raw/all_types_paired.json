@@ -1,0 +1,669 @@
+{
+  "hive": {
+    "PERSON": {
+      "n": 228,
+      "values": {
+        "ours": 1.0,
+        "S6": 0.9956,
+        "S7": 0.9298
+      },
+      "pairs": {
+        "S6": {
+          "diff": 0.0044,
+          "ci95": [
+            0.0,
+            0.0138
+          ],
+          "verdict": "tie"
+        },
+        "S7": {
+          "diff": 0.0702,
+          "ci95": [
+            0.0369,
+            0.1086
+          ],
+          "verdict": "win"
+        }
+      }
+    },
+    "PHONE_NUMBER": {
+      "n": 217,
+      "values": {
+        "ours": 0.9816,
+        "S6": 0.9954,
+        "S7": 0.0046
+      },
+      "pairs": {
+        "S6": {
+          "diff": -0.0138,
+          "ci95": [
+            -0.0349,
+            0.0048
+          ],
+          "verdict": "tie"
+        },
+        "S7": {
+          "verdict": "unsupported"
+        }
+      }
+    },
+    "EMAIL_ADDRESS": {
+      "n": 173,
+      "values": {
+        "ours": 1.0,
+        "S6": 1.0,
+        "S7": 0.0
+      },
+      "pairs": {
+        "S6": {
+          "diff": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "verdict": "tie"
+        },
+        "S7": {
+          "verdict": "unsupported"
+        }
+      }
+    },
+    "INN": {
+      "n": 118,
+      "values": {
+        "ours": 1.0,
+        "S6": 0.9746,
+        "S7": 0.0
+      },
+      "pairs": {
+        "S6": {
+          "diff": 0.0254,
+          "ci95": [
+            0.0,
+            0.0561
+          ],
+          "verdict": "tie"
+        },
+        "S7": {
+          "verdict": "unsupported"
+        }
+      }
+    },
+    "SNILS": {
+      "n": 97,
+      "values": {
+        "ours": 0.9897,
+        "S6": 0.7938,
+        "S7": 0.0
+      },
+      "pairs": {
+        "S6": {
+          "diff": 0.1959,
+          "ci95": [
+            0.1078,
+            0.2824
+          ],
+          "verdict": "win"
+        },
+        "S7": {
+          "verdict": "unsupported"
+        }
+      }
+    },
+    "PASSPORT": {
+      "n": 120,
+      "values": {
+        "ours": 0.8833,
+        "S6": 0.7833,
+        "S7": 0.0
+      },
+      "pairs": {
+        "S6": {
+          "diff": 0.1,
+          "ci95": [
+            0.0342,
+            0.1709
+          ],
+          "verdict": "win"
+        },
+        "S7": {
+          "verdict": "unsupported"
+        }
+      }
+    },
+    "CREDIT_CARD": {
+      "n": 92,
+      "values": {
+        "ours": 1.0,
+        "S6": 0.7065,
+        "S7": 0.0
+      },
+      "pairs": {
+        "S6": {
+          "diff": 0.2935,
+          "ci95": [
+            0.2,
+            0.3889
+          ],
+          "verdict": "win"
+        },
+        "S7": {
+          "verdict": "unsupported"
+        }
+      }
+    },
+    "ADDRESS": {
+      "n": 176,
+      "values": {
+        "ours": 0.4318,
+        "S6": 0.8352,
+        "S7": 0.858
+      },
+      "pairs": {
+        "S6": {
+          "diff": -0.4034,
+          "ci95": [
+            -0.4869,
+            -0.3131
+          ],
+          "verdict": "loss"
+        },
+        "S7": {
+          "diff": -0.4261,
+          "ci95": [
+            -0.5103,
+            -0.3372
+          ],
+          "verdict": "loss"
+        }
+      }
+    },
+    "clean": {
+      "n": 378,
+      "values": {
+        "ours": 0.0529,
+        "S6": 0.0132,
+        "S7": 0.0106
+      },
+      "pairs": {
+        "S6": {
+          "diff": 0.0397,
+          "ci95": [
+            0.0176,
+            0.0619
+          ],
+          "verdict": "loss"
+        },
+        "S7": {
+          "diff": 0.0423,
+          "ci95": [
+            0.0206,
+            0.0638
+          ],
+          "verdict": "loss"
+        }
+      }
+    }
+  },
+  "bench": {
+    "PERSON": {
+      "n": 685,
+      "values": {
+        "ours": 0.8161,
+        "S6": 0.8949,
+        "S7": 0.5226
+      },
+      "pairs": {
+        "S6": {
+          "diff": -0.0788,
+          "ci95": [
+            -0.1254,
+            -0.0376
+          ],
+          "verdict": "loss"
+        },
+        "S7": {
+          "diff": 0.2934,
+          "ci95": [
+            0.246,
+            0.3445
+          ],
+          "verdict": "win"
+        }
+      }
+    },
+    "PHONE_NUMBER": {
+      "n": 173,
+      "values": {
+        "ours": 0.8497,
+        "S6": 0.9538,
+        "S7": 0.0116
+      },
+      "pairs": {
+        "S6": {
+          "diff": -0.104,
+          "ci95": [
+            -0.1493,
+            -0.0625
+          ],
+          "verdict": "loss"
+        },
+        "S7": {
+          "verdict": "unsupported"
+        }
+      }
+    },
+    "EMAIL_ADDRESS": {
+      "n": 221,
+      "values": {
+        "ours": 0.9005,
+        "S6": 0.8054,
+        "S7": 0.0045
+      },
+      "pairs": {
+        "S6": {
+          "diff": 0.095,
+          "ci95": [
+            0.0,
+            0.1618
+          ],
+          "verdict": "tie"
+        },
+        "S7": {
+          "verdict": "unsupported"
+        }
+      }
+    },
+    "INN": {
+      "n": 263,
+      "values": {
+        "ours": 0.8403,
+        "S6": 0.8859,
+        "S7": 0.0
+      },
+      "pairs": {
+        "S6": {
+          "diff": -0.0456,
+          "ci95": [
+            -0.0952,
+            0.0036
+          ],
+          "verdict": "tie"
+        },
+        "S7": {
+          "verdict": "unsupported"
+        }
+      }
+    },
+    "SNILS": {
+      "n": 223,
+      "values": {
+        "ours": 0.5919,
+        "S6": 0.9283,
+        "S7": 0.0045
+      },
+      "pairs": {
+        "S6": {
+          "diff": -0.3363,
+          "ci95": [
+            -0.417,
+            -0.2568
+          ],
+          "verdict": "loss"
+        },
+        "S7": {
+          "verdict": "unsupported"
+        }
+      }
+    },
+    "PASSPORT": {
+      "n": 494,
+      "values": {
+        "ours": 0.7652,
+        "S6": 0.9049,
+        "S7": 0.0162
+      },
+      "pairs": {
+        "S6": {
+          "diff": -0.1397,
+          "ci95": [
+            -0.1938,
+            -0.0857
+          ],
+          "verdict": "loss"
+        },
+        "S7": {
+          "verdict": "unsupported"
+        }
+      }
+    },
+    "CREDIT_CARD": {
+      "n": 203,
+      "values": {
+        "ours": 0.8621,
+        "S6": 0.9803,
+        "S7": 0.0
+      },
+      "pairs": {
+        "S6": {
+          "diff": -0.1182,
+          "ci95": [
+            -0.1683,
+            -0.0711
+          ],
+          "verdict": "loss"
+        },
+        "S7": {
+          "verdict": "unsupported"
+        }
+      }
+    },
+    "clean": {
+      "n": 371,
+      "values": {
+        "ours": 0.2129,
+        "S6": 0.0296,
+        "S7": 0.1132
+      },
+      "pairs": {
+        "S6": {
+          "diff": 0.1833,
+          "ci95": [
+            0.1421,
+            0.2278
+          ],
+          "verdict": "loss"
+        },
+        "S7": {
+          "diff": 0.0997,
+          "ci95": [
+            0.0501,
+            0.1511
+          ],
+          "verdict": "loss"
+        }
+      }
+    }
+  },
+  "v2": {
+    "PERSON": {
+      "n": 424,
+      "values": {
+        "ours": 0.967,
+        "S6": 0.6887,
+        "S7": 0.7146
+      },
+      "pairs": {
+        "S6": {
+          "diff": 0.2783,
+          "ci95": [
+            0.2333,
+            0.3245
+          ],
+          "verdict": "win"
+        },
+        "S7": {
+          "diff": 0.2524,
+          "ci95": [
+            0.2109,
+            0.2948
+          ],
+          "verdict": "win"
+        }
+      }
+    },
+    "PHONE_NUMBER": {
+      "n": 52,
+      "values": {
+        "ours": 1.0,
+        "S6": 0.9808,
+        "S7": 0.0
+      },
+      "pairs": {
+        "S6": {
+          "diff": 0.0192,
+          "ci95": [
+            0.0,
+            0.0645
+          ],
+          "verdict": "tie"
+        },
+        "S7": {
+          "verdict": "unsupported"
+        }
+      }
+    },
+    "EMAIL_ADDRESS": {
+      "n": 28,
+      "values": {
+        "ours": 1.0,
+        "S6": 1.0,
+        "S7": 0.0
+      },
+      "pairs": {
+        "S6": {
+          "diff": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "verdict": "tie"
+        },
+        "S7": {
+          "verdict": "unsupported"
+        }
+      }
+    },
+    "INN": {
+      "n": 24,
+      "values": {
+        "ours": 1.0,
+        "S6": 0.9583,
+        "S7": 0.0417
+      },
+      "pairs": {
+        "S6": {
+          "diff": 0.0417,
+          "ci95": [
+            0.0,
+            0.1429
+          ],
+          "verdict": "tie"
+        },
+        "S7": {
+          "verdict": "unsupported"
+        }
+      }
+    },
+    "SNILS": {
+      "n": 12,
+      "values": {
+        "ours": 1.0,
+        "S6": 0.75,
+        "S7": 0.0833
+      },
+      "pairs": {
+        "S6": {
+          "diff": 0.25,
+          "ci95": [
+            0.0,
+            0.5385
+          ],
+          "verdict": "tie"
+        },
+        "S7": {
+          "verdict": "unsupported"
+        }
+      }
+    },
+    "PASSPORT": {
+      "n": 20,
+      "values": {
+        "ours": 0.8,
+        "S6": 0.95,
+        "S7": 0.0
+      },
+      "pairs": {
+        "S6": {
+          "diff": -0.15,
+          "ci95": [
+            -0.3182,
+            0.0
+          ],
+          "verdict": "tie"
+        },
+        "S7": {
+          "verdict": "unsupported"
+        }
+      }
+    },
+    "CREDIT_CARD": {
+      "n": 16,
+      "values": {
+        "ours": 1.0,
+        "S6": 0.8125,
+        "S7": 0.0
+      },
+      "pairs": {
+        "S6": {
+          "diff": 0.1875,
+          "ci95": [
+            0.0,
+            0.4
+          ],
+          "verdict": "tie"
+        },
+        "S7": {
+          "verdict": "unsupported"
+        }
+      }
+    },
+    "DATE_OF_BIRTH": {
+      "n": 20,
+      "values": {
+        "ours": 0.95,
+        "S6": 0.0,
+        "S7": 0.0
+      },
+      "pairs": {
+        "S6": {
+          "diff": 0.95,
+          "ci95": [
+            0.8421,
+            1.0
+          ],
+          "verdict": "win"
+        },
+        "S7": {
+          "verdict": "unsupported"
+        }
+      }
+    },
+    "clean": {
+      "n": 80,
+      "values": {
+        "ours": 0.1875,
+        "S6": 0.4375,
+        "S7": 0.3
+      },
+      "pairs": {
+        "S6": {
+          "diff": -0.25,
+          "ci95": [
+            -0.3494,
+            -0.1566
+          ],
+          "verdict": "win"
+        },
+        "S7": {
+          "diff": -0.1125,
+          "ci95": [
+            -0.2162,
+            -0.023
+          ],
+          "verdict": "win"
+        }
+      }
+    }
+  },
+  "alro": {
+    "PERSON": {
+      "n": 2941,
+      "values": {
+        "ours": 0.9884,
+        "S6": 0.9293,
+        "S7": 0.999
+      },
+      "pairs": {
+        "S6": {
+          "diff": 0.0592,
+          "ci95": [
+            0.048,
+            0.0705
+          ],
+          "verdict": "win"
+        },
+        "S7": {
+          "diff": -0.0105,
+          "ci95": [
+            -0.0146,
+            -0.0068
+          ],
+          "verdict": "loss"
+        }
+      }
+    },
+    "ADDRESS": {
+      "n": 2660,
+      "values": {
+        "ours": 0.6823,
+        "S6": 0.7868,
+        "S7": 0.9977
+      },
+      "pairs": {
+        "S6": {
+          "diff": -0.1045,
+          "ci95": [
+            -0.1312,
+            -0.0782
+          ],
+          "verdict": "loss"
+        },
+        "S7": {
+          "diff": -0.3154,
+          "ci95": [
+            -0.3346,
+            -0.2967
+          ],
+          "verdict": "loss"
+        }
+      }
+    },
+    "clean": {
+      "n": 1026,
+      "values": {
+        "ours": 0.3002,
+        "S6": 0.4678,
+        "S7": 0.0117
+      },
+      "pairs": {
+        "S6": {
+          "diff": -0.1676,
+          "ci95": [
+            -0.1924,
+            -0.142
+          ],
+          "verdict": "win"
+        },
+        "S7": {
+          "diff": 0.2885,
+          "ci95": [
+            0.259,
+            0.3171
+          ],
+          "verdict": "loss"
+        }
+      }
+    }
+  }
+}

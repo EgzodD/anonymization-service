@@ -1,0 +1,28 @@
+{
+  "version": "1.0.0",
+  "snapshot_utc": "2026-10-22 05:28",
+  "commit": "e39d90c",
+  "commit_date": "2026-10-22",
+  "dirty": false,
+  "our_system": "S5-r7",
+  "person_model": "person_ruBERT",
+  "datasets_sha256": {
+    "alro": "4fd062dd20d47028",
+    "bench": "7be61c7f9834aec3",
+    "dev_rmr": "4bcc5a9fbcf50134",
+    "dev_v2": "7a1dd39d3ae3be2a",
+    "ext": "6cd969ca1f1e784d",
+    "hive": "c056ee874f29e3b9",
+    "mcr": "23f0bd2b836adeba",
+    "test_v2": "686a51bd59801bbe"
+  },
+  "libs": {
+    "presidio-analyzer": "2.2.355",
+    "spacy": "3.8.4",
+    "transformers": "5.12.1",
+    "torch": "2.12.1+cpu",
+    "pymorphy3": "2.0.6"
+  },
+  "python": "3.12.3",
+  "source": "data/eval_v2/results/"
+}
