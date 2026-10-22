@@ -7,12 +7,12 @@
 действующий гейт. Состояние прогона зависит от того, лежит ли локально
 PERSON-модель:
 
-| Режим | Команда | Результат (17.09.2026) |
+| Режим | Команда | Результат (22.10.2026) |
 |---|---|---|
-| С моделью (полный) | `pytest -q` | **200 passed** |
-| Без модели (как в CI) | `ALLOW_NO_PERSON_MODEL=true pytest -m "not requires_model" -q` | **180 passed, 20 deselected** |
+| С моделью (полный) | `pytest -q` | **298 passed** |
+| Без модели (как в CI) | `ALLOW_NO_PERSON_MODEL=true pytest -m "not requires_model" -q` | **278 passed, 20 deselected** |
 
-Девять тестов помечены `requires_model` и в CI пропускаются — модели в
+Двадцать тестов помечены `requires_model` и в CI пропускаются — модели в
 репозитории нет (см. раздел 4 и `pyproject.toml`). Среди них гейт качества
 на dev-наборах `test_quality_gate_dev.py` — см. раздел 4.
 
